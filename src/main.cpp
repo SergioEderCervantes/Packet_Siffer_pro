@@ -83,7 +83,6 @@ struct udphdr
 };
 #pragma pack(pop)
 #endif
-int link_hdr_lenght = 0;
 
 
 // Dispositivos:
@@ -96,6 +95,82 @@ const char* device = "\\Device\\NPF_{9CBF4109-9C55-4615-BFEA-221D0D8A1A00}";    
 const char *device = "enp0s3";    //Ethernet de la maquina virtual
 
 #endif
+
+int link_hdr_lenght = 0;
+
+void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packetd_ptr);
+
+void print_packet(const u_char* packet_ptr, int length);
+
+int main(int argc, char const* argv[])
+{
+    #ifdef _WIN32
+    WSADATA wsaData;
+    // Inicializar WinSock
+    if (WSAStartup(MAKEWORD(1, 1), &wsaData) != 0) {
+        std::cerr << "Error al inicializar WinSock." << std::endl;
+        return 1;
+    }
+    #endif
+
+    /*
+     * Declare the device name and error buffer size
+     * PCAP_ERRBUF_SIZE is defined in pcap.h
+     */
+    char errbuf[PCAP_ERRBUF_SIZE];
+
+    /*
+     * BUFSIZ is defined in stdio.h, 0 to disable promiscuous mode and -1 to
+     * disable timeout.
+     */
+    pcap_t* capdev = pcap_open_live(device, BUFSIZ, 0, -1, errbuf);
+    /*
+     * if capdev is null that means something went wrong, so we print the
+     * error (which is stored in error_buffer) and exit the program.
+     */
+    if (capdev == NULL)
+    {
+        std::cout << "Error: pcap_open_live " << errbuf << std::endl;
+        exit(1);
+    }
+
+    int link_hdr_type = pcap_datalink(capdev);
+    switch (link_hdr_type)
+    {
+    case DLT_NULL:
+        link_hdr_lenght = 4;
+        break;
+    case DLT_EN10MB:
+        link_hdr_lenght = 14;
+    default:
+        link_hdr_lenght = 0;
+        break;
+    }
+
+    // lets limit the capture to 5 packets.
+    int packets_count = 0;
+    /*
+     * pcap_loop returns 0 upon success and -1 if it fails,
+     * we listen to this return value and print an error if
+     * pcap_loop failed
+     */
+    if (pcap_loop(capdev, packets_count, call_me, (u_char*)NULL))
+    {
+        std::cout << "ERROR: pcap_loop() failed!" << std::endl
+            << errbuf << std::endl;
+        exit(1);
+    }
+
+    pcap_close(capdev);
+    #ifdef _WIN32
+    WSACleanup();
+    #endif
+
+    return 0;
+}
+
+
+
 
 // Callback para manejar paquetes capturados
 void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packetd_ptr)
@@ -171,7 +246,8 @@ void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packe
 }
 
 // Imprime el raw
-void print_packet(const u_char* packet_ptr, int length) {
+void print_packet(const u_char* packet_ptr, int length) 
+{
     std::cout << "Packet Data (Hexadecimal):\n";
     for (int i = 0; i < length; i++) {
         std::cout << ("%02x ", packet_ptr[i]);
@@ -179,71 +255,4 @@ void print_packet(const u_char* packet_ptr, int length) {
     }
 
     std::cout << "\n";
-}
-
-int main(int argc, char const* argv[])
-{
-    #ifdef _WIN32
-    WSADATA wsaData;
-    // Inicializar WinSock
-    if (WSAStartup(MAKEWORD(1, 1), &wsaData) != 0) {
-        std::cerr << "Error al inicializar WinSock." << std::endl;
-        return 1;
-    }
-    #endif
-
-    /*
-     * Declare the device name and error buffer size
-     * PCAP_ERRBUF_SIZE is defined in pcap.h
-     */
-    char errbuf[PCAP_ERRBUF_SIZE];
-
-    /*
-     * BUFSIZ is defined in stdio.h, 0 to disable promiscuous mode and -1 to
-     * disable timeout.
-     */
-    pcap_t* capdev = pcap_open_live(device, BUFSIZ, 0, -1, errbuf);
-    /*
-     * if capdev is null that means something went wrong, so we print the
-     * error (which is stored in error_buffer) and exit the program.
-     */
-    if (capdev == NULL)
-    {
-        std::cout << "Error: pcap_open_live " << errbuf << std::endl;
-        exit(1);
-    }
-
-    int link_hdr_type = pcap_datalink(capdev);
-    switch (link_hdr_type)
-    {
-    case DLT_NULL:
-        link_hdr_lenght = 4;
-        break;
-    case DLT_EN10MB:
-        link_hdr_lenght = 14;
-    default:
-        link_hdr_lenght = 0;
-        break;
-    }
-
-    // lets limit the capture to 5 packets.
-    int packets_count = 0;
-    /*
-     * pcap_loop returns 0 upon success and -1 if it fails,
-     * we listen to this return value and print an error if
-     * pcap_loop failed
-     */
-    if (pcap_loop(capdev, packets_count, call_me, (u_char*)NULL))
-    {
-        std::cout << "ERROR: pcap_loop() failed!" << std::endl
-            << errbuf << std::endl;
-        exit(1);
-    }
-
-    pcap_close(capdev);
-    #ifdef _WIN32
-    WSACleanup();
-    #endif
-
-    return 0;
 }
