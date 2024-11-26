@@ -3,9 +3,8 @@
 
 //Includes generales
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
+#include <cstdlib>
+#include <cstdint>
 #include <pcap/pcap.h>
 #include <cstring>
 #ifndef _WIN32
@@ -86,8 +85,18 @@ struct udphdr
 #endif
 int link_hdr_lenght = 0;
 
+
+// Dispositivos:
+#ifdef _WIN32
+const char* device = "\\Device\\NPF_{9CBF4109-9C55-4615-BFEA-221D0D8A1A00}";    //WIFI
+// const char *device = "\\Device\\NPF_{68CD2555-CB87-445E-97A6-93ECF9F06E66}";    //Ethernet de la maquina virtual
+
+#else
 //const char* device = "enp0s8";    //WIFI
 const char *device = "enp0s3";    //Ethernet de la maquina virtual
+
+#endif
+
 // Callback para manejar paquetes capturados
 void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packetd_ptr)
 {
@@ -107,11 +116,15 @@ void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packe
         packet_len = ntohs(ip_hdr->ip_len), // header length + data length
         packet_hlen = ip_hdr->ip_hl;        // header length
 
+
     // Print it
-    printf("************"
-           "************\n");
-    printf("ID: %d | SRC: %s | DST: %s | TOS: 0x%x | TTL: %d\n",
-        packet_id, packet_srcip, packet_dstip, packet_tos, packet_ttl);
+    std::cout << "************************\n";
+    std::cout << " | ID: " << packet_id 
+        << " | SRC: " << packet_srcip
+        << " | DST: " << packet_dstip
+        << " | TOS: " << packet_tos
+        << " | TTL: " << packet_ttl
+        << " | " << std::endl;
 
     packetd_ptr += (4 * packet_hlen);
     int protocol_type = ip_hdr->ip_p;
@@ -128,18 +141,18 @@ void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packe
         src_port = tcp_header->th_sport;
         dst_port = tcp_header->th_dport;
         // Extracting SYN, ACK and URG flags
-        printf("PROTO: TCP | FLAGS: %c/%c/%c | SPORT: %d | DPORT: %d |\n",
-            (tcp_header->th_flags & TH_SYN ? 'S' : '-'),
-            (tcp_header->th_flags & TH_ACK ? 'A' : '-'),
-            (tcp_header->th_flags & TH_URG ? 'U' : '-'),
-            src_port, dst_port);
+        std::cout << "PROTO: TCP | FLAGS: " 
+            << (tcp_header->th_flags & TH_SYN ? 'S' : '-') << "/"
+            << (tcp_header->th_flags & TH_ACK ? 'A' : '-') << "/"
+            << (tcp_header->th_flags & TH_URG ? 'U' : '-') 
+            << " | SPORT: " << src_port << " | DPORT: " << dst_port << " | " << std::endl;
         break;
     }
     case IPPROTO_UDP: {
         udp_header = (struct udphdr*)packetd_ptr;
         src_port = udp_header->uh_sport;
         dst_port = udp_header->uh_dport;
-        printf("PROTO: UDP | SPORT: %d | DPORT: %d |\n", src_port, dst_port);
+        std::cout << "PROTO: UDP | SPORT: " << src_port << " | DPORT: " << dst_port << " | " << std::endl;
         break;
     }
     case IPPROTO_ICMP:
@@ -148,24 +161,24 @@ void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packe
         // Get ICMP type and code
         int icmp_type = icmp_header->icmp_type;
         int icmp_type_code = icmp_header->icmp_code;
-        printf("PROTO: ICMP | TYPE: %d | CODE: %d |\n", icmp_type, icmp_type_code);
+        std::cout << "PROTO: ICMP | TYPE: " << icmp_type << " | CODE: " << icmp_type_code << " | " << std::endl;
         break;
     }
     default:
-        printf("Protocolo desconocido, protocol_type: %d", protocol_type);
+        std::cout << "Protocolo desconocido, protocol_type:" << protocol_type << std::endl;
         break;
     }
 }
 
 // Imprime el raw
 void print_packet(const u_char* packet_ptr, int length) {
-    printf("Packet Data (Hexadecimal):\n");
+    std::cout << "Packet Data (Hexadecimal):\n";
     for (int i = 0; i < length; i++) {
-        printf("%02x ", packet_ptr[i]);
-        if ((i + 1) % 16 == 0) printf("\n"); // Salto a 16 bytes
+        std::cout << ("%02x ", packet_ptr[i]);
+        if ((i + 1) % 16 == 0) std::cout << "\n"; // Salto a 16 bytes
     }
 
-    printf("\n");
+    std::cout << "\n";
 }
 
 int main(int argc, char const* argv[])
@@ -214,7 +227,7 @@ int main(int argc, char const* argv[])
     }
 
     // lets limit the capture to 5 packets.
-    int packets_count = 50;
+    int packets_count = 0;
     /*
      * pcap_loop returns 0 upon success and -1 if it fails,
      * we listen to this return value and print an error if
