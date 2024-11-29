@@ -24,6 +24,13 @@ private:
     QTableWidget *packetTable;
     QComboBox *filterCombo;
     QTextEdit *configText;
+
+
+public slots:
+    void addPacketToTable(const QStringList &packetData);
+
+signals:
+    void packetCaptured(const QStringList &packedData);
 };
 
 #endif // SNIFFERWINDOW_H

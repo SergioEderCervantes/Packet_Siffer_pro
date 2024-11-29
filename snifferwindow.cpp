@@ -73,10 +73,11 @@ SnifferWindow::SnifferWindow(QWidget *parent)
     // Cambiar el tamaño de la ventana (puedes ajustarlo a tu preferencia)
     this->resize(800, 600);  // Ancho de 800px y altura de 600px
 
+    connect(this,&SnifferWindow::packetCaptured, this, &SnifferWindow::addPacketToTable);
     // Simular la llegada de paquetes a intervalos regulares (ejemplo)
-    QTimer *timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &SnifferWindow::addNewPacket);
-    timer->start(2000);  // Llamar a addNewPacket() cada 2 segundos
+    // QTimer *timer = new QTimer(this);
+    // connect(timer, &QTimer::timeout, this, &SnifferWindow::addNewPacket);
+    // timer->start(2000);  // Llamar a addNewPacket() cada 2 segundos
 }
 
 SnifferWindow::~SnifferWindow() {
@@ -100,4 +101,12 @@ void SnifferWindow::addNewPacket() {
     packetTable->setItem(row, 8, new QTableWidgetItem("443")); // DstPort
     packetTable->setItem(row, 9, new QTableWidgetItem("8")); // ICMPType
     packetTable->setItem(row, 10, new QTableWidgetItem("0")); // ICMPTypeCode
+}
+
+void SnifferWindow::addPacketToTable(const QStringList &packetData){
+    int row = packetTable->rowCount();
+    packetTable->insertRow(row);
+    for (int col = 0; col < packetData.size(); ++col) {
+        packetTable->setItem(row,col,new QTableWidgetItem(packetData[col]));
+    }
 }
