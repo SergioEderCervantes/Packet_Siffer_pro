@@ -22,6 +22,9 @@ elseif(UNIX)
     set(PCAP_LIBS ${PCAP_LIBRARIES})
 endif()
 
+# Necesitas encontrar y añadir las librerías de Qt
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+
 # Archivos Fuente
 set(SOURCES src/main.cpp)
 
@@ -32,4 +35,4 @@ set(SOURCES src/main.cpp)
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 # Vincular las bibliotecas necesarias
-target_link_libraries(${PROJECT_NAME} ${PCAP_LIBS})
+target_link_libraries(${PROJECT_NAME} ${PCAP_LIBS} Qt6::Core Qt6::Gui Qt6::Widgets)
