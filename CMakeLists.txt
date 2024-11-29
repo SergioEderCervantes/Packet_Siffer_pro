@@ -27,8 +27,8 @@ elseif(UNIX)
 endif()
 
 # Necesitas encontrar y añadir las librerías de Qt
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets LinguistTools)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets LinguistTools)
 
 
 
@@ -45,6 +45,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Packet_sniffer_pro
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        pcapthread.h pcapthread.cpp
     )
 
 else()
@@ -54,4 +55,4 @@ else()
 
 endif()
 
-target_link_libraries(Packet_sniffer_pro PRIVATE ${PCAP_LIBS} Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(Packet_sniffer_pro PRIVATE ${PCAP_LIBS} Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Widgets)
