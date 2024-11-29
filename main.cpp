@@ -1,12 +1,14 @@
 // ProyectoRedes2.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
-
+// #include
 // Includes generales
 #include <iostream>
 #include <cstdlib>
 #include <cstdint>
 #include <pcap/pcap.h>
 #include <cstring>
+#include <QApplication>
+
 #ifndef _WIN32
 
 // Includes de linux
@@ -22,7 +24,7 @@
 // Includes y definiciones de windows
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
+#include "snifferwindow.h"
 #pragma comment(lib, "ws2_32.lib") // Vincular la biblioteca de sockets de Windows
 
 // Definir los flags de TCP
@@ -99,7 +101,7 @@ void call_me(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *packe
 
 void print_packet(const u_char *packet_ptr, int length);
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
     pcap_if_t *alldevs; // Lista de dispositivos
     /*
@@ -134,9 +136,9 @@ int main(int argc, char const *argv[])
         i++;
     }
 
-    int option;
+    int option = 4 ;
     std::cout << "Dame el numero de la interfaz de red que quieres usar: ";
-    std::cin >> option;
+    // std::cin >> option;
 
     pcap_if_t *dev = alldevs;
 
@@ -148,7 +150,7 @@ int main(int argc, char const *argv[])
     }
 
     char *choosenDevName = dev->name;
-
+    std::cout << choosenDevName;
     // Libera la lista de dispositivos
     pcap_freealldevs(alldevs);
 
@@ -191,7 +193,7 @@ int main(int argc, char const *argv[])
     }
 
     // lets limit the capture to 5 packets.
-    int packets_count = 0;
+    int packets_count = 10;
     /*
      * pcap_loop returns 0 upon success and -1 if it fails,
      * we listen to this return value and print an error if
@@ -208,8 +210,12 @@ int main(int argc, char const *argv[])
 #ifdef _WIN32
     WSACleanup();
 #endif
+    QApplication app(argc, argv);
 
-    return 0;
+    SnifferWindow window;
+    window.show();  // Muestra la ventana principal
+
+return app.exec();  // Inicia el bucle de eventos de Qt
 }
 
 // Callback para manejar paquetes capturados
@@ -287,15 +293,15 @@ void call_me(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *packe
 }
 
 // Imprime el raw
-void print_packet(const u_char *packet_ptr, int length)
-{
-    std::cout << "Packet Data (Hexadecimal):\n";
-    for (int i = 0; i < length; i++)
-    {
-        std::cout << ("%02x ", packet_ptr[i]);
-        if ((i + 1) % 16 == 0)
-            std::cout << "\n"; // Salto a 16 bytes
-    }
+// void print_packet(const u_char *packet_ptr, int length)
+// {
+//     std::cout << "Packet Data (Hexadecimal):\n";
+//     for (int i = 0; i < length; i++)
+//     {
+//         std::cout << ("%02x ", packet_ptr[i]);
+//         if ((i + 1) % 16 == 0)
+//             std::cout << "\n"; // Salto a 16 bytes
+//     }
 
-    std::cout << "\n";
-}
+//     std::cout << "\n";
+// }
