@@ -1,7 +1,7 @@
 // ProyectoRedes2.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-//Includes generales
+// Includes generales
 #include <iostream>
 #include <cstdlib>
 #include <cstdint>
@@ -9,7 +9,7 @@
 #include <cstring>
 #ifndef _WIN32
 
-//Includes de linux
+// Includes de linux
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
@@ -17,13 +17,11 @@
 #include <netinet/udp.h>
 #include <arpa/inet.h>
 
-
 #else
 
-//Includes y definiciones de windows
+// Includes y definiciones de windows
 #include <winsock2.h>
-#include <ws2tcpip.h> 
-
+#include <ws2tcpip.h>
 
 #pragma comment(lib, "ws2_32.lib") // Vincular la biblioteca de sockets de Windows
 
@@ -84,46 +82,91 @@ struct udphdr
 #pragma pack(pop)
 #endif
 
-
 // Dispositivos:
 #ifdef _WIN32
-const char* device = "\\Device\\NPF_{9CBF4109-9C55-4615-BFEA-221D0D8A1A00}";    //WIFI
+// const char *device = "\\Device\\NPF_{9CBF4109-9C55-4615-BFEA-221D0D8A1A00}"; // WIFI
 // const char *device = "\\Device\\NPF_{68CD2555-CB87-445E-97A6-93ECF9F06E66}";    //Ethernet de la maquina virtual
 
 #else
-//const char* device = "enp0s8";    //WIFI
-const char *device = "enp0s3";    //Ethernet de la maquina virtual
+// const char* device = "enp0s8";    //WIFI
+const char *device = "enp0s3"; // Ethernet de la maquina virtual
 
 #endif
 
 int link_hdr_lenght = 0;
 
-void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packetd_ptr);
+void call_me(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *packetd_ptr);
 
-void print_packet(const u_char* packet_ptr, int length);
+void print_packet(const u_char *packet_ptr, int length);
 
-int main(int argc, char const* argv[])
+int main(int argc, char const *argv[])
 {
-    #ifdef _WIN32
-    WSADATA wsaData;
-    // Inicializar WinSock
-    if (WSAStartup(MAKEWORD(1, 1), &wsaData) != 0) {
-        std::cerr << "Error al inicializar WinSock." << std::endl;
-        return 1;
-    }
-    #endif
-
+    pcap_if_t *alldevs; // Lista de dispositivos
     /*
      * Declare the device name and error buffer size
      * PCAP_ERRBUF_SIZE is defined in pcap.h
      */
     char errbuf[PCAP_ERRBUF_SIZE];
 
+    // Encuentra todos los dispositivos disponibles
+    if (pcap_findalldevs(&alldevs, errbuf) == -1)
+    {
+        std::cerr << "Error al encontrar dispositivos: " << errbuf << std::endl;
+        return 1;
+    }
+
+    // Itera sobre la lista de dispositivos e imprime información
+    std::cout << "Interfaces de red disponibles:\n";
+    int i = 1;
+
+    for (pcap_if_t *dev = alldevs; dev != nullptr; dev = dev->next)
+    {
+
+        std::cout << i << ".-";
+        if (dev->description)
+        {
+            std::cout << dev->description << std::endl;
+        }
+        else
+        {
+            std::cout << "  Descripción: No disponible, nombre de la interfaz: " << dev->name << std::endl;
+        }
+        i++;
+    }
+
+    int option;
+    std::cout << "Dame el numero de la interfaz de red que quieres usar: ";
+    std::cin >> option;
+
+    pcap_if_t *dev = alldevs;
+
+    // Recorre la lista hasta el dispositivo seleccionado
+    for (int j = 1; j < option; ++j)
+    {
+        if (dev)
+            dev = dev->next; // Mueve al siguiente dispositivo
+    }
+
+    char *choosenDevName = dev->name;
+
+    // Libera la lista de dispositivos
+    pcap_freealldevs(alldevs);
+
+#ifdef _WIN32
+    WSADATA wsaData;
+    // Inicializar WinSock
+    if (WSAStartup(MAKEWORD(1, 1), &wsaData) != 0)
+    {
+        std::cerr << "Error al inicializar WinSock." << std::endl;
+        return 1;
+    }
+#endif
+
     /*
      * BUFSIZ is defined in stdio.h, 0 to disable promiscuous mode and -1 to
      * disable timeout.
      */
-    pcap_t* capdev = pcap_open_live(device, BUFSIZ, 0, -1, errbuf);
+    pcap_t *capdev = pcap_open_live(choosenDevName, BUFSIZ, 0, -1, errbuf);
     /*
      * if capdev is null that means something went wrong, so we print the
      * error (which is stored in error_buffer) and exit the program.
@@ -154,29 +197,26 @@ int main(int argc, char const* argv[])
      * we listen to this return value and print an error if
      * pcap_loop failed
      */
-    if (pcap_loop(capdev, packets_count, call_me, (u_char*)NULL))
+    if (pcap_loop(capdev, packets_count, call_me, (u_char *)NULL))
     {
         std::cout << "ERROR: pcap_loop() failed!" << std::endl
-            << errbuf << std::endl;
+                  << errbuf << std::endl;
         exit(1);
     }
 
     pcap_close(capdev);
-    #ifdef _WIN32
+#ifdef _WIN32
     WSACleanup();
-    #endif
+#endif
 
     return 0;
 }
 
-
-
-
 // Callback para manejar paquetes capturados
-void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packetd_ptr)
+void call_me(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *packetd_ptr)
 {
     packetd_ptr += 14;
-    struct ip* ip_hdr = (struct ip*)packetd_ptr;
+    struct ip *ip_hdr = (struct ip *)packetd_ptr;
 
     // inet_ntoa() writes it's result to an address and returns this address,
     // but subsequent calls to inet_ntoa() will also write to the same address,
@@ -191,40 +231,41 @@ void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packe
         packet_len = ntohs(ip_hdr->ip_len), // header length + data length
         packet_hlen = ip_hdr->ip_hl;        // header length
 
-
     // Print it
     std::cout << "************************\n";
-    std::cout << " | ID: " << packet_id 
-        << " | SRC: " << packet_srcip
-        << " | DST: " << packet_dstip
-        << " | TOS: " << packet_tos
-        << " | TTL: " << packet_ttl
-        << " | " << std::endl;
+    std::cout << " | ID: " << packet_id
+              << " | SRC: " << packet_srcip
+              << " | DST: " << packet_dstip
+              << " | TOS: " << packet_tos
+              << " | TTL: " << packet_ttl
+              << " | " << std::endl;
 
     packetd_ptr += (4 * packet_hlen);
     int protocol_type = ip_hdr->ip_p;
 
-    struct tcphdr* tcp_header;
-    struct udphdr* udp_header;
-    struct icmp* icmp_header;
+    struct tcphdr *tcp_header;
+    struct udphdr *udp_header;
+    struct icmp *icmp_header;
     int src_port, dst_port;
 
     switch (protocol_type)
     {
-    case IPPROTO_TCP: {
-        tcp_header = (struct tcphdr*)packetd_ptr;
+    case IPPROTO_TCP:
+    {
+        tcp_header = (struct tcphdr *)packetd_ptr;
         src_port = tcp_header->th_sport;
         dst_port = tcp_header->th_dport;
         // Extracting SYN, ACK and URG flags
-        std::cout << "PROTO: TCP | FLAGS: " 
-            << (tcp_header->th_flags & TH_SYN ? 'S' : '-') << "/"
-            << (tcp_header->th_flags & TH_ACK ? 'A' : '-') << "/"
-            << (tcp_header->th_flags & TH_URG ? 'U' : '-') 
-            << " | SPORT: " << src_port << " | DPORT: " << dst_port << " | " << std::endl;
+        std::cout << "PROTO: TCP | FLAGS: "
+                  << (tcp_header->th_flags & TH_SYN ? 'S' : '-') << "/"
+                  << (tcp_header->th_flags & TH_ACK ? 'A' : '-') << "/"
+                  << (tcp_header->th_flags & TH_URG ? 'U' : '-')
+                  << " | SPORT: " << src_port << " | DPORT: " << dst_port << " | " << std::endl;
         break;
     }
-    case IPPROTO_UDP: {
-        udp_header = (struct udphdr*)packetd_ptr;
+    case IPPROTO_UDP:
+    {
+        udp_header = (struct udphdr *)packetd_ptr;
         src_port = udp_header->uh_sport;
         dst_port = udp_header->uh_dport;
         std::cout << "PROTO: UDP | SPORT: " << src_port << " | DPORT: " << dst_port << " | " << std::endl;
@@ -232,7 +273,7 @@ void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packe
     }
     case IPPROTO_ICMP:
     {
-        icmp_header = (struct icmp*)packetd_ptr;
+        icmp_header = (struct icmp *)packetd_ptr;
         // Get ICMP type and code
         int icmp_type = icmp_header->icmp_type;
         int icmp_type_code = icmp_header->icmp_code;
@@ -246,12 +287,14 @@ void call_me(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packe
 }
 
 // Imprime el raw
-void print_packet(const u_char* packet_ptr, int length) 
+void print_packet(const u_char *packet_ptr, int length)
 {
     std::cout << "Packet Data (Hexadecimal):\n";
-    for (int i = 0; i < length; i++) {
+    for (int i = 0; i < length; i++)
+    {
         std::cout << ("%02x ", packet_ptr[i]);
-        if ((i + 1) % 16 == 0) std::cout << "\n"; // Salto a 16 bytes
+        if ((i + 1) % 16 == 0)
+            std::cout << "\n"; // Salto a 16 bytes
     }
 
     std::cout << "\n";
