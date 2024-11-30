@@ -34,7 +34,7 @@ SnifferWindow* PcapThread::windowPtr = nullptr;
 #define TH_ACK 0x10
 #define TH_URG 0x20
 
-    struct ip
+struct ip
 {
     unsigned char ip_hl : 4; // Longitud del encabezado (en palabras de 32 bits)
     unsigned char ip_v : 4;  // Versión del protocolo (IPv4 = 4)
@@ -96,7 +96,7 @@ PcapThread::~PcapThread(){
     wait();
 }
 void PcapThread::run(){
-    std::cout << std::endl <<  "Name: " << this->choosenDevName << std::endl;
+    std::cout << std::endl <<  "Name: " << this->choosenDevName  << std::endl;
 
     /*
          * Declare the device name and error buffer size

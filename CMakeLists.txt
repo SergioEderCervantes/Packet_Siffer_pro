@@ -14,7 +14,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 if(WIN32)
     message(STATUS "Compilacion para windows")
     add_definitions(-DWIN32)
-    include_directories("C:\\Develop\\npcap-sdk-1.13\\Include")
+    include_directories(
+            ${CMAKE_SOURCE_DIR}/include
+            "C:\\Develop\\npcap-sdk-1.13\\Include")
     link_directories("C:\\Develop\\npcap-sdk-1.13\\Lib\\x64")
     set(PCAP_LIBS ws2_32 wpcap)
 elseif(UNIX)
@@ -32,25 +34,31 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets LinguistTool
 
 
 
-set(PROJECT_SOURCES
-        main.cpp
-        snifferwindow.cpp
-        snifferwindow.h
-        snifferwindow.ui
+set(SOURCES
+        src/main.cpp
+        src/snifferwindow.cpp
+        src/pcapthread.cpp
 )
 # Archivos de Cabecera (cuando haya)
-# set(HEADERS include/utils.h)
+set(HEADERS 
+        include/snifferwindow.h
+        include/pcapthread.h
+)
+# Archivos ui
+
+
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Packet_sniffer_pro
         MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-        pcapthread.h pcapthread.cpp
+        ${SOURCES}
+        ${HEADERS}
     )
 
 else()
     add_executable(Packet_sniffer_pro
-        ${PROJECT_SOURCES}
+        ${SOURCES}
+        ${HEADERS}
     )
 
 endif()
