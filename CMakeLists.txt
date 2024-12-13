@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-#Nombre de proyecto y estandar de C++
+# Nombre del proyecto y estándar de C++
 project(Paquet_sniffer_pro VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
@@ -9,16 +9,15 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-
-#Config multiplataforma
+# Configuración multiplataforma
 if(WIN32)
-    message(STATUS "Compilacion para windows")
+    message(STATUS "Compilación para Windows")
     add_definitions(-DWIN32)
     include_directories("C:\\Develop\\npcap-sdk-1.13\\Include")
     link_directories("C:\\Develop\\npcap-sdk-1.13\\Lib\\x64")
     set(PCAP_LIBS ws2_32 wpcap)
 elseif(UNIX)
-    message(STATUS "Compulacion para Linux")
+    message(STATUS "Compilación para Linux")
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(PCAP REQUIRED libpcap)
     include_directories(${PCAP_INCLUDE_DIRS})
@@ -30,29 +29,32 @@ endif()
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets LinguistTools)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets LinguistTools)
 
-
-
+# Fuentes del proyecto
 set(PROJECT_SOURCES
-        main.cpp
-        snifferwindow.cpp
-        snifferwindow.h
-        snifferwindow.ui
+    src/main.cpp
+    src/pcapthread.cpp
+    src/snifferwindow.cpp
+    src/snifferwindow.ui
 )
-# Archivos de Cabecera (cuando haya)
-# set(HEADERS include/utils.h)
+
+# Archivos de cabecera
+include_directories(include)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Packet_sniffer_pro
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        pcapthread.h pcapthread.cpp
+        include/pcapthread.h
+        include/snifferwindow.h
     )
-
 else()
     add_executable(Packet_sniffer_pro
         ${PROJECT_SOURCES}
+        include/pcapthread.h
+        include/snifferwindow.h
     )
-
 endif()
 
+# Vincular librerías
 target_link_libraries(Packet_sniffer_pro PRIVATE ${PCAP_LIBS} Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Widgets)
+
