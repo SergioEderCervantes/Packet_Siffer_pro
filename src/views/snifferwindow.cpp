@@ -74,10 +74,7 @@ SnifferWindow::SnifferWindow(QWidget *parent)
     this->resize(800, 600);  // Ancho de 800px y altura de 600px
 
     connect(this,&SnifferWindow::packetCaptured, this, &SnifferWindow::addPacketToTable);
-    // Simular la llegada de paquetes a intervalos regulares (ejemplo)
-    // QTimer *timer = new QTimer(this);
-    // connect(timer, &QTimer::timeout, this, &SnifferWindow::addNewPacket);
-    // timer->start(2000);  // Llamar a addNewPacket() cada 2 segundos
+
 }
 
 SnifferWindow::~SnifferWindow() {

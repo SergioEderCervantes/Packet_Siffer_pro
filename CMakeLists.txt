@@ -36,6 +36,9 @@ set(PROJECT_SOURCES
     src/main.cpp
     src/controllers/pcapthread.cpp
     src/views/snifferwindow.cpp
+    src/views/deviceselectionwindow.cpp
+    src/models/devicemodel.cpp
+    src/controllers/devicecontroller.cpp
     src/views/snifferwindow.ui
 )
 
@@ -49,12 +52,17 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         include/controllers/pcapthread.h
         include/views/snifferwindow.h
+        include/views/deviceselectionwindow.h
+        include/models/devicemodel.h
+        include/controllers/devicecontroller.h
     )
 else()
     add_executable(Packet_sniffer_pro
         ${PROJECT_SOURCES}
         include/controllers/pcapthread.h
         include/views/snifferwindow.h
+        include/views/deviceselectionwindow.h
+        include/models/interfacesmodel.h
     )
 endif()
 
