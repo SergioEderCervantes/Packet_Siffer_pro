@@ -24,8 +24,8 @@
 // Includes y definiciones de windows
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include "snifferwindow.h"
-#include "pcapthread.h"
+#include "views/snifferwindow.h"
+#include "controllers/pcapthread.h"
 #pragma comment(lib, "ws2_32.lib") // Vincular la biblioteca de sockets de Windows
 
 // Definir los flags de TCP

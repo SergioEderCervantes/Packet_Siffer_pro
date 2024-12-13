@@ -34,26 +34,27 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets LinguistTool
 # Fuentes del proyecto
 set(PROJECT_SOURCES
     src/main.cpp
-    src/pcapthread.cpp
-    src/snifferwindow.cpp
-    src/snifferwindow.ui
+    src/controllers/pcapthread.cpp
+    src/views/snifferwindow.cpp
+    src/views/snifferwindow.ui
 )
 
 # Archivos de cabecera
 include_directories(include)
 
+
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Packet_sniffer_pro
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        include/pcapthread.h
-        include/snifferwindow.h
+        include/controllers/pcapthread.h
+        include/views/snifferwindow.h
     )
 else()
     add_executable(Packet_sniffer_pro
         ${PROJECT_SOURCES}
-        include/pcapthread.h
-        include/snifferwindow.h
+        include/controllers/pcapthread.h
+        include/views/snifferwindow.h
     )
 endif()
 

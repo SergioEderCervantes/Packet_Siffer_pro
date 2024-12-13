@@ -1,4 +1,4 @@
-#include "pcapthread.h"
+#include "controllers/pcapthread.h"
 SnifferWindow* PcapThread::windowPtr = nullptr;
 //Includes generales
 #include <iostream>
