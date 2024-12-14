@@ -25,6 +25,8 @@ private:
     void setupViews();
     void setupMenuBar();
     void setupToolBar();
+    void handleExitFromCapture();
+    void saveCapturedData();
 
 };
 
