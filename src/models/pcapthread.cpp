@@ -1,5 +1,4 @@
-#include "controllers/pcapThread.h"
-SnifferWindow* PcapThread::windowPtr = nullptr;
+#include "models/pcapThread.h"
 //Includes generales
 #include <iostream>
 #include <pcap/pcap.h>
@@ -84,35 +83,20 @@ struct udphdr
 #endif
 
 
-PcapThread::PcapThread(SnifferWindow* window, std::string name)
+PcapThread::PcapThread(char* name, QObject *parent) :QThread(parent)
 {
-    this->window = window;
-    this->choosenDevName = name.c_str();
-    windowPtr = window;
-
+    choosenDevName = strdup(name);  // Usar strdup para copiar la cadena
 }
 PcapThread::~PcapThread(){
-    quit();
-    wait();
+    free(choosenDevName);
 }
 void PcapThread::run(){
     std::cout << std::endl <<  "Name: " << this->choosenDevName  << std::endl;
 
-    /*
-         * Declare the device name and error buffer size
-         * PCAP_ERRBUF_SIZE is defined in pcap.h
-         */
     char errbuf[PCAP_ERRBUF_SIZE];
-    /*
-         * BUFSIZ is defined in stdio.h, 0 to disable promiscuous mode and -1 to
-         * disable timeout.
-         */
     pcap_t *capdev = pcap_open_live(this->choosenDevName, BUFSIZ, 0, -1, errbuf);
 
-    /*
-         * if capdev is null that means something went wrong, so we print the
-         * error (which is stored in error_buffer) and exit the program.
-         */
+
     if (capdev == NULL)
     {
         std::cout << "Error: pcap_open_live " << errbuf << std::endl;
@@ -140,7 +124,7 @@ void PcapThread::run(){
          * we listen to this return value and print an error if
          * pcap_loop failed
          */
-    if (pcap_loop(capdev, packets_count, packetHandler, nullptr))
+    if (pcap_loop(capdev, packets_count, PcapThread::staticPacketHandler, reinterpret_cast<u_char *>(this)) < 0)
     {
         std::cout << "ERROR: pcap_loop() failed!" << std::endl
                   << errbuf << std::endl;
@@ -148,16 +132,21 @@ void PcapThread::run(){
     }
 
     pcap_close(capdev);
+    emit finished();
 }
 
+//Callback intermediario entre pcap_loop y packetHandler
+void PcapThread::staticPacketHandler(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *packetd_ptr) {
+    // Convertir el puntero `user` a una instancia de `PcapThread`
+    PcapThread *thread = reinterpret_cast<PcapThread *>(user);
+
+    // Llamar al método no estático de la clase
+    thread->packetHandler(user, pkthdr, packetd_ptr);
+}
 
 // Callback de pcap_loop
 void PcapThread::packetHandler(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *packetd_ptr)
 {
-    if (!windowPtr){
-        std::cout << "WindowPtr== nullptr" << std::endl;
-        return;
-    }
 
     // Procesar el paquete (extraer los datos relevantes)
     QStringList packetData;
@@ -256,81 +245,6 @@ void PcapThread::packetHandler(u_char *user, const struct pcap_pkthdr *pkthdr, c
 
     // Emitir la señal para agregar el paquete a la GUI
 
-    emit windowPtr->packetCaptured(packetData);
+    emit packetCaptured(packetData);
 }
 
-
-// Callback para manejar paquetes capturados
-// DEPRECATED
-void PcapThread::call_me(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *packetd_ptr)
-{
-    packetd_ptr += 14;
-    struct ip *ip_hdr = (struct ip *)packetd_ptr;
-
-    // inet_ntoa() writes it's result to an address and returns this address,
-    // but subsequent calls to inet_ntoa() will also write to the same address,
-    // so we need to copy the result to a buffer.
-    char packet_srcip[INET_ADDRSTRLEN]; // source ip address
-    char packet_dstip[INET_ADDRSTRLEN]; // destination ip address
-    strcpy(packet_srcip, inet_ntoa(ip_hdr->ip_src));
-    strcpy(packet_dstip, inet_ntoa(ip_hdr->ip_dst));
-    int packet_id = ntohs(ip_hdr->ip_id),   // identification
-        packet_ttl = ip_hdr->ip_ttl,        // Time To Live
-        packet_tos = ip_hdr->ip_tos,        // Type Of Service
-        packet_len = ntohs(ip_hdr->ip_len), // header length + data length
-        packet_hlen = ip_hdr->ip_hl;        // header length
-
-    // Print it
-    std::cout << "************************\n";
-    std::cout << " | ID: " << packet_id
-              << " | SRC: " << packet_srcip
-              << " | DST: " << packet_dstip
-              << " | TOS: " << packet_tos
-              << " | TTL: " << packet_ttl
-              << " | " << std::endl;
-
-    packetd_ptr += (4 * packet_hlen);
-    int protocol_type = ip_hdr->ip_p;
-
-    struct tcphdr *tcp_header;
-    struct udphdr *udp_header;
-    struct icmp *icmp_header;
-    int src_port, dst_port;
-
-    switch (protocol_type)
-    {
-    case IPPROTO_TCP:
-    {
-        tcp_header = (struct tcphdr *)packetd_ptr;
-        src_port = tcp_header->th_sport;
-        dst_port = tcp_header->th_dport;
-        // Extracting SYN, ACK and URG flags
-        std::cout << "PROTO: TCP | FLAGS: "
-                  << (tcp_header->th_flags & TH_SYN ? 'S' : '-') << "/"
-                  << (tcp_header->th_flags & TH_ACK ? 'A' : '-') << "/"
-                  << (tcp_header->th_flags & TH_URG ? 'U' : '-')
-                  << " | SPORT: " << src_port << " | DPORT: " << dst_port << " | " << std::endl;
-        break;
-    }
-    case IPPROTO_UDP:
-    {
-        udp_header = (struct udphdr *)packetd_ptr;
-        src_port = udp_header->uh_sport;
-        dst_port = udp_header->uh_dport;
-        std::cout << "PROTO: UDP | SPORT: " << src_port << " | DPORT: " << dst_port << " | " << std::endl;
-        break;
-    }
-    case IPPROTO_ICMP:
-    {
-        icmp_header = (struct icmp *)packetd_ptr;
-        // Get ICMP type and code
-        int icmp_type = icmp_header->icmp_type;
-        int icmp_type_code = icmp_header->icmp_code;
-        std::cout << "PROTO: ICMP | TYPE: " << icmp_type << " | CODE: " << icmp_type_code << " | " << std::endl;
-        break;
-    }
-    default:
-        std::cout << "Protocolo desconocido, protocol_type:" << protocol_type << std::endl;
-        break;
-    }
-}

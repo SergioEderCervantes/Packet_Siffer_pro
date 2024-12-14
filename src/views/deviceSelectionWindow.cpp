@@ -2,7 +2,7 @@
 #include <QVBoxLayout>
 #include <QDebug>
 DeviceSelectionWindow::DeviceSelectionWindow(DeviceModel *model, QWidget *parent)
-    :QMainWindow(parent){
+    :QWidget(parent){
     // Definicion de atributos
     this->devListView = new QListView(this);
     this->startCaptureBtn = new QPushButton("Iniciar Captura", this);
@@ -32,10 +32,7 @@ DeviceSelectionWindow::DeviceSelectionWindow(DeviceModel *model, QWidget *parent
     layout->addWidget(devListView);
     layout->addWidget(startCaptureBtn);
 
-    auto *widget = new QWidget(this);
-    widget->setLayout(layout);
-    this->setCentralWidget(widget);
-    this->resize(800,600);
+    setLayout(layout);
 }
 
 void DeviceSelectionWindow::onDeviceSelected(const QModelIndex &index) {

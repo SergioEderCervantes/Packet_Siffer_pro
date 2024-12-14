@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     mainViewManager mainWindow;
-    mainWindow.show();
+    mainWindow.showMaximized();
 
     // SnifferWindow window;
 
