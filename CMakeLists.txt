@@ -15,8 +15,8 @@ if(WIN32)
     add_definitions(-DWIN32)
     include_directories(
             ${CMAKE_SOURCE_DIR}/include
-            "C:\\Develop\\npcap-sdk-1.13\\Include")
-    link_directories("C:\\Develop\\npcap-sdk-1.13\\Lib\\x64")
+            "C:\\ncap\\Include")
+    link_directories("C:\\ncap\\Lib\\x64")
     set(PCAP_LIBS ws2_32 wpcap)
 elseif(UNIX)
     message(STATUS "Compilación para Linux")
@@ -57,6 +57,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         include/models/deviceModel.h
         include/controllers/deviceController.h
         include/views/mainViewManager.h
+        src/views/MainWindow.ui
     )
 else()
     add_executable(Packet_sniffer_pro
