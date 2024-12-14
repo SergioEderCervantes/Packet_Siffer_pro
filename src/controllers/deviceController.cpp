@@ -1,4 +1,4 @@
-#include "controllers/devicecontroller.h"
+#include "controllers/deviceController.h"
 #include <QDebug>
 DeviceController::DeviceController(DeviceModel *model, DeviceSelectionWindow *view, QObject *parent)
     :QObject(parent), model(model), view(view){

@@ -34,12 +34,13 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets LinguistTool
 # Fuentes del proyecto
 set(PROJECT_SOURCES
     src/main.cpp
-    src/controllers/pcapthread.cpp
-    src/views/snifferwindow.cpp
-    src/views/deviceselectionwindow.cpp
-    src/models/devicemodel.cpp
-    src/controllers/devicecontroller.cpp
-    src/views/snifferwindow.ui
+    src/controllers/pcapThread.cpp
+    src/views/snifferWindow.cpp
+    src/views/deviceSelectionWindow.cpp
+    src/models/deviceModel.cpp
+    src/controllers/deviceController.cpp
+    src/views/snifferWindow.ui
+    src/views/mainViewManager.cpp
 )
 
 # Archivos de cabecera
@@ -50,19 +51,22 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Packet_sniffer_pro
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        include/controllers/pcapthread.h
-        include/views/snifferwindow.h
-        include/views/deviceselectionwindow.h
-        include/models/devicemodel.h
-        include/controllers/devicecontroller.h
+        include/controllers/pcapThread.h
+        include/views/snifferWindow.h
+        include/views/deviceSelectionWindow.h
+        include/models/deviceModel.h
+        include/controllers/deviceController.h
+        include/views/mainViewManager.h
     )
 else()
     add_executable(Packet_sniffer_pro
         ${PROJECT_SOURCES}
-        include/controllers/pcapthread.h
-        include/views/snifferwindow.h
-        include/views/deviceselectionwindow.h
-        include/models/interfacesmodel.h
+        include/controllers/pcapThread.h
+        include/views/snifferWindow.h
+        include/views/deviceSelectionWindow.h
+        include/models/deviceModel.h
+        include/controllers/deviceController.h
+        include/views/MainViewManager.h
     )
 endif()
 

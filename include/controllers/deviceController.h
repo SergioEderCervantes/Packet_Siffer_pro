@@ -2,7 +2,7 @@
 #define DEVICECONTROLLER_H
 
 #include <QObject>
-#include "models/devicemodel.h"
+#include "models/deviceModel.h"
 #include "views/DeviceSelectionWindow.h"
 
 class DeviceController : public QObject {

@@ -1,4 +1,4 @@
-#include "views/deviceselectionwindow.h"
+#include "views/deviceSelectionWindow.h"
 #include <QVBoxLayout>
 #include <QDebug>
 DeviceSelectionWindow::DeviceSelectionWindow(DeviceModel *model, QWidget *parent)
@@ -20,7 +20,7 @@ DeviceSelectionWindow::DeviceSelectionWindow(DeviceModel *model, QWidget *parent
     // Asociar devModel con la list view
     devListView->setModel(devModel);
 
-
+    devListView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     // Conectar las se;ales y los slots
     connect(devListView, &QListView::clicked, this, &DeviceSelectionWindow::onDeviceSelected);

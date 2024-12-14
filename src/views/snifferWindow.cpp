@@ -1,4 +1,4 @@
-#include "views/snifferwindow.h"
+#include "views/snifferWindow.h"
 #include <QTableWidget>
 #include <QTextEdit>
 #include <QComboBox>

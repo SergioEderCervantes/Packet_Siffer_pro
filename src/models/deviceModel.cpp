@@ -1,4 +1,4 @@
-#include "models/devicemodel.h"
+#include "models/deviceModel.h"
 #include <pcap/pcap.h>
 #include <QDebug>
 

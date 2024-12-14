@@ -5,7 +5,7 @@
 #include <QListView>
 #include <QPushButton>
 #include <QStandardItemModel>
-#include "models/devicemodel.h"
+#include "models/deviceModel.h"
 
 class DeviceSelectionWindow : public QMainWindow
 {

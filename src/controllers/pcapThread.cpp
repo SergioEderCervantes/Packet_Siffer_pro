@@ -1,4 +1,4 @@
-#include "controllers/pcapthread.h"
+#include "controllers/pcapThread.h"
 SnifferWindow* PcapThread::windowPtr = nullptr;
 //Includes generales
 #include <iostream>
@@ -25,7 +25,7 @@ SnifferWindow* PcapThread::windowPtr = nullptr;
 
 // Includes y definiciones de windows
 #include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib") // Vincular la biblioteca de sockets de Windows
+#pragma comment(lib, "ws2_32.lib") // Vincular la biblioteca de sockets de Windows
 // Definir los flags de TCP
 #define TH_FIN 0x01
 #define TH_SYN 0x02

@@ -7,7 +7,7 @@
 #include <winsock2.h>
 #endif
 
-#include "views/snifferwindow.h"
+#include "views/snifferWindow.h"
 class PcapThread : public QThread
 {
     Q_OBJECT

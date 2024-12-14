@@ -9,10 +9,10 @@
 #include <QApplication>
 // #include "views/snifferwindow.h"
 // #include "controllers/pcapthread.h"
-#include "models/devicemodel.h"
-#include "controllers/devicecontroller.h"
-#include "views/deviceselectionwindow.h"
-
+#include "models/deviceModel.h"
+#include "controllers/deviceController.h"
+#include "views/deviceSelectionWindow.h"
+#include "views/mainViewManager.h"
 #ifndef _WIN32
 
 // Includes de linux
@@ -29,7 +29,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#pragma comment(lib, "ws2_32.lib") // Vincular la biblioteca de sockets de Windows
+#pragma comment(lib, "ws2_32.lib") // Vincular la biblioteca de sockets de Windows
 
 // Definir los flags de TCP
 #define TH_FIN 0x01
@@ -59,13 +59,8 @@ int main(int argc, char *argv[])
 
     QApplication app(argc, argv);
 
-    DeviceModel devModel;
-    DeviceSelectionWindow devWindow(&devModel);
-    DeviceController devController(&devModel, &devWindow);
-
-    devWindow.show();
-
-
+    mainViewManager mainWindow;
+    mainWindow.show();
 
     // SnifferWindow window;
 
