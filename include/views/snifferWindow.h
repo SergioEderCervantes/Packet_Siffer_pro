@@ -1,14 +1,13 @@
 #ifndef SNIFFERWINDOW_H
 #define SNIFFERWINDOW_H
 
-#include <QMainWindow>
 #include <QTableWidget>
 #include <QComboBox>
 #include <QTextEdit>
 #include <QTabWidget>
 #include <QTimer>
 
-class SnifferWindow : public QMainWindow
+class SnifferWindow : public QWidget
 {
     Q_OBJECT
 
@@ -28,9 +27,6 @@ private:
 
 public slots:
     void addPacketToTable(const QStringList &packetData);
-
-signals:
-    void packetCaptured(const QStringList &packedData);
 };
 
 #endif // SNIFFERWINDOW_H

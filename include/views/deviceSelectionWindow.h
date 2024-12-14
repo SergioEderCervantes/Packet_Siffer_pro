@@ -1,13 +1,12 @@
 #ifndef DEVICESELECTIONWINDOW_H
 #define DEVICESELECTIONWINDOW_H
 
-#include <QMainWindow>
 #include <QListView>
 #include <QPushButton>
 #include <QStandardItemModel>
 #include "models/deviceModel.h"
 
-class DeviceSelectionWindow : public QMainWindow
+class DeviceSelectionWindow : public QWidget
 {
     Q_OBJECT
 public:

@@ -4,12 +4,12 @@
 #include <QObject>
 #include "models/deviceModel.h"
 #include "views/DeviceSelectionWindow.h"
-
+#include "views/mainViewManager.h"
 class DeviceController : public QObject {
     Q_OBJECT
 
 public:
-    explicit DeviceController(DeviceModel *model, DeviceSelectionWindow *view, QObject *parent = nullptr);
+    explicit DeviceController(DeviceModel *model, DeviceSelectionWindow *view, mainViewManager *MVM, QObject *parent = nullptr);
 
 private slots:
     void handleStartCapture(const QString &deviceName);
@@ -17,6 +17,7 @@ private slots:
 private:
     DeviceModel *model;
     DeviceSelectionWindow *view;
+    mainViewManager *MVM;
 };
 
 

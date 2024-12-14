@@ -14,18 +14,20 @@ mainViewManager::mainViewManager(QWidget *parent)
     setupMenuBar();
     setupToolBar();
     setCentralWidget(mainContainer);
-    this->resize(1000,600);
 
     mainContainer->setCurrentWidget(devSelectionWind);
 }
 
-
+//Funcion para inicializar todas las vistas en el mainContainer
 void mainViewManager::setupViews(){
     DeviceModel *devModel = new DeviceModel(this);
-    devSelectionWind = new DeviceSelectionWindow(devModel, this);
+    this->devSelectionWind = new DeviceSelectionWindow(devModel, this);
+
     DeviceController *devController = new DeviceController(devModel,devSelectionWind,this);
+    this->captureWind = new SnifferWindow(this);
 
     mainContainer->addWidget(devSelectionWind);
+    mainContainer->addWidget(captureWind);
 }
 
 void mainViewManager::setupMenuBar(){
@@ -64,7 +66,11 @@ void mainViewManager::setupToolBar() {
     toolbar->addAction(homeAction);
     toolbar->addAction(captureAction);
 }
-void mainViewManager::onStartCapture(const QString &deviceName) {
-    // Pasar el dispositivo seleccionado a la ventana de captura
-    qDebug() << "Se inicio la captura";
+
+SnifferWindow* mainViewManager::getSnifferWindow(){
+    return this->captureWind;
+}
+
+void mainViewManager::setCurrentView(QWidget* view){
+    mainContainer->setCurrentWidget(view);
 }

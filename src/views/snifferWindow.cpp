@@ -8,74 +8,32 @@
 #include <QTimer>
 
 SnifferWindow::SnifferWindow(QWidget *parent)
-    : QMainWindow(parent)
-{
-    // Crear el QTabWidget y las pestañas
-    tabWidget = new QTabWidget(this);
+    : QWidget(parent) {
+    // Crear la tabla de paquetes
+    packetTable = new QTableWidget(this);
 
-    // Pestaña de Paquetes
-    QWidget *packetTab = new QWidget();
-    packetTable = new QTableWidget(packetTab);
-
-    // Definir la cantidad de columnas (sin cambiar)
-    packetTable->setColumnCount(11); // Número de columnas
+    // Definir la cantidad de columnas y encabezados
+    packetTable->setColumnCount(11);
     packetTable->setHorizontalHeaderLabels({"Id", "SrcIP", "DstIP", "Tos", "TTL",
                                             "Protocolo", "Flags", "SrcPort",
                                             "DstPort", "ICMPType", "ICMPTypeCode"});
 
-    // Hacer que la tabla se ajuste al tamaño de la pestaña
-    packetTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);  // Expande en ambas direcciones
+    // Configurar el tamaño de la tabla
+    packetTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    packetTable->setSelectionBehavior(QAbstractItemView::SelectRows); // Selección por filas completas
+    packetTable->setEditTriggers(QAbstractItemView::NoEditTriggers);  // Deshabilitar edición
 
-    // Crear el layout para la pestaña de paquetes
-    QVBoxLayout *packetLayout = new QVBoxLayout(packetTab);
-    packetLayout->addWidget(packetTable);
-    packetTab->setLayout(packetLayout);  // Establecer el layout en la pestaña de paquetes
+    // Crear el layout principal y agregar la tabla
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->addWidget(packetTable);
 
-    // Llamar a adjustSize() para que la pestaña ajuste su tamaño según la tabla
-    packetTab->adjustSize();  // Ajusta el tamaño de la pestaña según su contenido (la tabla)
+    // Establecer el layout en el widget principal
+    setLayout(mainLayout);
 
-    // Pestaña de Filtros
-    QWidget *filterTab = new QWidget();
-    filterCombo = new QComboBox(filterTab);
-    filterCombo->addItem("TCP");
-    filterCombo->addItem("UDP");
-    filterCombo->addItem("ICMP");
-
-    // Hacer que el combo box se ajuste al tamaño de la pestaña
-    filterCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);  // Expande horizontalmente, fijo en altura
-
-    // Crear el layout para la pestaña de filtros
-    QVBoxLayout *filterLayout = new QVBoxLayout(filterTab);
-    filterLayout->addWidget(filterCombo);
-    filterTab->setLayout(filterLayout);  // Establecer el layout en la pestaña de filtros
-
-    // Pestaña de Configuración
-    QWidget *configTab = new QWidget();
-    configText = new QTextEdit(configTab);
-    configText->setPlainText("Configuración...");
-
-    // Hacer que el QTextEdit se ajuste al tamaño de la pestaña
-    configText->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);  // Expande en ambas direcciones
-
-    // Crear el layout para la pestaña de configuración
-    QVBoxLayout *configLayout = new QVBoxLayout(configTab);
-    configLayout->addWidget(configText);
-    configTab->setLayout(configLayout);  // Establecer el layout en la pestaña de configuración
-
-    // Agregar las pestañas al QTabWidget
-    tabWidget->addTab(packetTab, "Paquetes");
-    tabWidget->addTab(filterTab, "Filtros");
-    tabWidget->addTab(configTab, "Configuración");
-
-    // Configurar la ventana principal
-    setCentralWidget(tabWidget);
-
-    // Cambiar el tamaño de la ventana (puedes ajustarlo a tu preferencia)
-    this->resize(800, 600);  // Ancho de 800px y altura de 600px
-
-    connect(this,&SnifferWindow::packetCaptured, this, &SnifferWindow::addPacketToTable);
-
+    // Configurar el tamaño inicial de la ventana
+    resize(800, 600);
 }
+
 
 SnifferWindow::~SnifferWindow() {
     // Destructor (puedes liberar recursos si es necesario)
