@@ -51,31 +51,29 @@ set(PROJECT_SOURCES
     src/views/deviceSelectionWindow.cpp
     src/models/deviceModel.cpp
     src/controllers/deviceController.cpp
-    src/views/snifferWindow.ui
     src/views/mainViewManager.cpp
+)
+
+set(PROJECT_HEADERS
+    include/models/pcapThread.h
+    include/models/SQLiteThread.h
+    include/models/deviceModel.h
+    include/controllers/deviceController.h
+    include/views/snifferWindow.h
+    include/views/deviceSelectionWindow.h
+    include/views/mainViewManager.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Packet_sniffer_pro
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        include/models/pcapThread.h
-        include/views/snifferWindow.h
-        include/views/deviceSelectionWindow.h
-        include/models/deviceModel.h
-        include/controllers/deviceController.h
-        include/views/mainViewManager.h
-        src/views/MainWindow.ui
+        ${PROJECT_HEADERS}
     )
 else()
     add_executable(Packet_sniffer_pro
         ${PROJECT_SOURCES}
-        include/models/pcapThread.h
-        include/views/snifferWindow.h
-        include/views/deviceSelectionWindow.h
-        include/models/deviceModel.h
-        include/controllers/deviceController.h
-        include/views/MainViewManager.h
+        ${PROJECT_HEADERS}
     )
 endif()
 

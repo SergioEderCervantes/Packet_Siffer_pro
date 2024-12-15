@@ -1,0 +1,4 @@
+#ifndef SQLITETHREAD_H
+#define SQLITETHREAD_H
+
+#endif // SQLITETHREAD_H
