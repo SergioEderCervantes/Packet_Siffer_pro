@@ -11,7 +11,7 @@ class mainViewManager : public QMainWindow {
 
 public:
     explicit mainViewManager(QWidget *parent = nullptr);
-    SnifferWindow* getSnifferWindow();
+    snifferWindow* getSnifferWindow();
     void setCurrentView(QWidget *view);
 private:
     //Contenedor principal
@@ -19,7 +19,7 @@ private:
 
     //Vistas agregadas
     DeviceSelectionWindow *devSelectionWind;
-    SnifferWindow *captureWind;
+    snifferWindow *captureWind;
 
     //Funciones extra
     void setupViews();

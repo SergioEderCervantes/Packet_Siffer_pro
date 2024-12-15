@@ -8,12 +8,12 @@ DeviceController::DeviceController(DeviceModel *model, DeviceSelectionWindow *vi
 
 void DeviceController::handleStartCapture(const QString &devName){
     qDebug() << "Iniciando Captura en: " << devName.toStdString();
-    //Sacar el Sniffer Window
-    SnifferWindow *target = this->MVM->getSnifferWindow();
+    //Sacar el sniffer Window
+    snifferWindow *target = this->MVM->getSnifferWindow();
     //Inicializar el Hilo de la captura de PCAP
     PcapThread *pcapThread = new PcapThread(devName.toUtf8().data(), this);
     // Conectar las se;ales
-    connect(pcapThread, &PcapThread::packetCaptured, target, &SnifferWindow::addPacketToTable);
+    connect(pcapThread, &PcapThread::packetCaptured, target, &snifferWindow::addPacketToTable);
     connect(pcapThread, &PcapThread::finished, pcapThread, &PcapThread::deleteLater);
     //Iniciar el hilo
     pcapThread->start();

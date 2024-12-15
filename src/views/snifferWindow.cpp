@@ -1,14 +1,13 @@
 #include "views/snifferWindow.h"
 #include <QSplitter>
-#include <QTableWidget>
 #include <QTreeWidget>
 #include <QTextEdit>
 #include <QVBoxLayout>
 #include <QPushButton>
-#include <QWidget>
 #include <QMessageBox>
+#include <QDebug>
 
-SnifferWindow::SnifferWindow(QWidget *parent)
+snifferWindow::snifferWindow(QWidget *parent)
     : QWidget(parent) {
     // ------------------------------
     // Crear la tabla de paquetes
@@ -24,9 +23,9 @@ SnifferWindow::SnifferWindow(QWidget *parent)
     // ------------------------------
     // Crear el cuadro de consultas SQL
     // ------------------------------
-    QTextEdit *sqlTextArea = new QTextEdit(this);
+    sqlTextArea = new QTextEdit(this);
     sqlTextArea->setPlaceholderText("Escribe tu consulta SQL aquí (solo comandos SELECT)");
-    QPushButton *executeSqlButton = new QPushButton("Ejecutar Consulta", this);
+    executeSqlButton = new QPushButton("Ejecutar Consulta", this);
 
     // Crear un layout para el área de consultas SQL
     QWidget *sqlQueryWidget = new QWidget(this);
@@ -81,7 +80,7 @@ SnifferWindow::SnifferWindow(QWidget *parent)
     // ------------------------------
     // Conectar el botón de consulta SQL
     // ------------------------------
-    connect(executeSqlButton, &QPushButton::clicked, this, [sqlTextArea, this]() {
+    connect(executeSqlButton, &QPushButton::clicked, this, [this]() {
         QString query = sqlTextArea->toPlainText().trimmed();
 
         // Validar que el comando comience con SELECT
@@ -91,16 +90,61 @@ SnifferWindow::SnifferWindow(QWidget *parent)
             return;
         }
 
-        // Aquí puedes procesar la consulta y mostrar los resultados
-        // processSqlQuery(query);
+        // Procesar la consulta
+        processSqlQuery(query);
     });
 }
 
-SnifferWindow::~SnifferWindow() {
-    // Destructor
+snifferWindow::~snifferWindow() {}
+
+void snifferWindow::applyTrafficFilter(const QString &query, const QString &filterType) {
+    // Mostrar en consola el filtro aplicado
+    qDebug() << "Filtrando con query:" << query << "y tipo de tráfico:" << filterType;
+
+    // Iterar sobre las filas de la tabla
+    for (int row = 0; row < packetTable->rowCount(); ++row) {
+        bool match = true;
+
+        // Verificar el tipo de tráfico (columna "Protocolo", índice 5)
+        QString protocol = packetTable->item(row, 5)->text();
+        if (filterType != "Todos" && protocol != filterType) {
+            match = false;
+        }
+
+        // Verificar si el texto de búsqueda está presente
+        if (!query.isEmpty()) {
+            bool queryFound = false;
+            for (int col = 0; col < packetTable->columnCount(); ++col) {
+                if (packetTable->item(row, col) &&
+                    packetTable->item(row, col)->text().contains(query, Qt::CaseInsensitive)) {
+                    queryFound = true;
+                    break;
+                }
+            }
+            if (!queryFound) {
+                match = false;
+            }
+        }
+
+        // Mostrar/ocultar la fila según el resultado
+        packetTable->setRowHidden(row, !match);
+    }
 }
 
-void SnifferWindow::addNewPacket() {
+void snifferWindow::processSqlQuery(const QString &query) {
+    // Simulación de ejecución de consulta
+    QMessageBox::information(this, "Consulta SQL", "Consulta ejecutada:\n" + query);
+
+    // Filtrar filas según una lógica de SQL (simulación)
+    if (query.contains("WHERE", Qt::CaseInsensitive)) {
+        QString filterValue = query.split("WHERE", Qt::SkipEmptyParts).last().trimmed();
+
+        // Aplicar el filtro como ejemplo
+        applyTrafficFilter(filterValue, "Todos");
+    }
+}
+
+void snifferWindow::addNewPacket() {
     int row = packetTable->rowCount();
     packetTable->insertRow(row);
 
@@ -118,17 +162,10 @@ void SnifferWindow::addNewPacket() {
     packetTable->setItem(row, 10, new QTableWidgetItem("0")); // ICMPTypeCode
 }
 
-void SnifferWindow::addPacketToTable(const QStringList &packetData) {
+void snifferWindow::addPacketToTable(const QStringList &packetData) {
     int row = packetTable->rowCount();
     packetTable->insertRow(row);
     for (int col = 0; col < packetData.size(); ++col) {
         packetTable->setItem(row, col, new QTableWidgetItem(packetData[col]));
     }
 }
-
-// void SnifferWindow::processSqlQuery(const QString &query) {
-//     // Procesar la consulta SQL (simulación)
-//     QMessageBox::information(this, "Consulta SQL", "Consulta ejecutada:\n" + query);
-
-//     // Aquí podrías agregar lógica para procesar la consulta y mostrar resultados
-// }

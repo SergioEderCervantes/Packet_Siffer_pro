@@ -16,11 +16,9 @@ mainViewManager::mainViewManager(QWidget *parent)
     setupViews();
     setupMenuBar();
     setupToolBar();
-    handleExitFromCapture();
-    saveCapturedData();
     setCentralWidget(mainContainer);
 
-    mainContainer->setCurrentWidget(devSelectionWind);
+    mainContainer->setCurrentWidget(devSelectionWind); // Establece la pantalla inicial
 }
 
 // Función para inicializar todas las vistas en el mainContainer
@@ -29,7 +27,7 @@ void mainViewManager::setupViews() {
     this->devSelectionWind = new DeviceSelectionWindow(devModel, this);
 
     DeviceController *devController = new DeviceController(devModel, devSelectionWind, this);
-    this->captureWind = new SnifferWindow(this);
+    this->captureWind = new snifferWindow(this);
 
     mainContainer->addWidget(devSelectionWind);
     mainContainer->addWidget(captureWind);
@@ -72,6 +70,43 @@ void mainViewManager::setupToolBar() {
     toolbar->addAction(captureAction);
 
     // ------------------------------
+    // Añadir buscador y filtro a la barra de herramientas
+    // ------------------------------
+    // Campo de texto para buscar
+    QLineEdit *searchField = new QLineEdit(this);
+    searchField->setPlaceholderText("Buscar tráfico...");
+
+    // ComboBox para seleccionar tipo de filtro
+    QComboBox *filterType = new QComboBox(this);
+    filterType->addItems({"TCP", "UDP", "ICMP", "Todos"});
+    filterType->setCurrentIndex(3); // Por defecto, "Todos"
+
+    // Conexión para aplicar filtros
+    connect(searchField, &QLineEdit::returnPressed, [this, searchField, filterType]() {
+        QString query = searchField->text();
+        QString filter = filterType->currentText();
+
+        // Aplica la lógica de filtrado
+        if (captureWind) {
+            captureWind->applyTrafficFilter(query, filter);
+        }
+    });
+
+    connect(filterType, &QComboBox::currentTextChanged, [this, searchField, filterType]() {
+        QString query = searchField->text();
+        QString filter = filterType->currentText();
+
+        // Aplica la lógica de filtrado automáticamente al cambiar el filtro
+        if (captureWind) {
+            captureWind->applyTrafficFilter(query, filter);
+        }
+    });
+
+    // Añadir los widgets a la barra de herramientas
+    toolbar->addWidget(searchField);
+    toolbar->addWidget(filterType);
+
+    // ------------------------------
     // Opción para salir de captura
     // ------------------------------
     QAction *exitCaptureAction = new QAction("Salir de Captura", this);
@@ -83,6 +118,7 @@ void mainViewManager::setupToolBar() {
 }
 
 void mainViewManager::handleExitFromCapture() {
+    // Verifica si estamos en la pantalla de captura antes de mostrar el diálogo
     if (mainContainer->currentWidget() == captureWind) {
         // Mostrar un cuadro de diálogo para preguntar al usuario
         QMessageBox::StandardButton reply = QMessageBox::question(
@@ -107,7 +143,7 @@ void mainViewManager::handleExitFromCapture() {
             qDebug() << "El usuario canceló la acción.";
         }
     } else {
-        QMessageBox::information(this, "Información", "No estás en la pantalla de captura.");
+        qDebug() << "No estás en la pantalla de captura.";
     }
 }
 
@@ -118,8 +154,7 @@ void mainViewManager::saveCapturedData() {
     // captureWind->saveToDatabase();
 }
 
-
-SnifferWindow* mainViewManager::getSnifferWindow() {
+snifferWindow* mainViewManager::getSnifferWindow() {
     return this->captureWind;
 }
 
