@@ -20,9 +20,6 @@ public:
     void applyTrafficFilter(const QString &query, const QString &filterType);
     void processSqlQuery(const QString &query);
 
-private slots:
-    void addNewPacket();  // Método para agregar un nuevo paquete a la tabla
-
 private:
     QTableWidget *packetTable;    // Tabla para mostrar los paquetes capturados
     QComboBox *filterCombo;       // ComboBox para seleccionar tipo de tráfico

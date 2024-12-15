@@ -144,24 +144,6 @@ void snifferWindow::processSqlQuery(const QString &query) {
     }
 }
 
-void snifferWindow::addNewPacket() {
-    int row = packetTable->rowCount();
-    packetTable->insertRow(row);
-
-    // Llenar la fila con datos simulados
-    packetTable->setItem(row, 0, new QTableWidgetItem(QString::number(row + 1))); // Id
-    packetTable->setItem(row, 1, new QTableWidgetItem("192.168.1.1")); // SrcIP
-    packetTable->setItem(row, 2, new QTableWidgetItem("192.168.1.2")); // DstIP
-    packetTable->setItem(row, 3, new QTableWidgetItem("0x00")); // Tos
-    packetTable->setItem(row, 4, new QTableWidgetItem("64")); // TTL
-    packetTable->setItem(row, 5, new QTableWidgetItem("TCP")); // Protocolo
-    packetTable->setItem(row, 6, new QTableWidgetItem("0x01")); // Flags
-    packetTable->setItem(row, 7, new QTableWidgetItem("80")); // SrcPort
-    packetTable->setItem(row, 8, new QTableWidgetItem("443")); // DstPort
-    packetTable->setItem(row, 9, new QTableWidgetItem("8")); // ICMPType
-    packetTable->setItem(row, 10, new QTableWidgetItem("0")); // ICMPTypeCode
-}
-
 void snifferWindow::addPacketToTable(const QStringList &packetData) {
     int row = packetTable->rowCount();
     packetTable->insertRow(row);
