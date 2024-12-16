@@ -22,6 +22,7 @@ signals:
 public slots:
     void savePacket(const QStringList &packetData, const QByteArray &rawData);
     void onFetchRowData(int row);
+    void handleKiller();
 private:
     static const std::string DATABASE_NAME;
     sqlite3 *db;

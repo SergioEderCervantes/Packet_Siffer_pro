@@ -19,7 +19,6 @@ void DeviceController::handleStartCapture(const QString &devName){
 
     // Conectar las se;ales
     connect(pcapThread, &PcapThread::packetCaptured, target, &snifferWindow::addPacketToTable);
-    connect(pcapThread, &PcapThread::finished, pcapThread, &PcapThread::deleteLater);
     connect(pcapThread, &PcapThread::sendPacketToDB,sqliteThread, &SQLiteThread::savePacket);
     connect(target, &snifferWindow::fetchRowData, sqliteThread, &SQLiteThread::onFetchRowData);
     connect(sqliteThread, &SQLiteThread::rowDataResponse, target, &snifferWindow::onRowDataResponse);
@@ -33,6 +32,11 @@ void DeviceController::handleStartCapture(const QString &devName){
         qDebug() << "Hilo terminado correctamente.";
         pcapThread->deleteLater();
 
+    });
+    connect(this->MVM, &mainViewManager::killThread, sqliteThread, &SQLiteThread::handleKiller);
+    connect(sqliteThread, &SQLiteThread::finished,this, [=] () {
+        qDebug("Hilo de la BD terminado correctamente");
+        sqliteThread->deleteLater();
     });
 
     //Iniciar los hilos

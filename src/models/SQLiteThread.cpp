@@ -31,6 +31,7 @@ QString SQLiteThread::generateTableName(const QString &interfaceName){
 }
 
 SQLiteThread::~SQLiteThread(){
+    qDebug("Entrando al destructor");
     if(this->db){
         sqlite3_close(db);
     }
@@ -181,4 +182,18 @@ void SQLiteThread::onFetchRowData(int row){
     sqlite3_finalize(stmt);
 
     emit rowDataResponse(packetData,rawData);
+}
+
+
+void SQLiteThread::handleKiller(){
+    qDebug() << "Cerrando hilo SQLiteThread de manera segura...";
+
+    //Cerrar la base de datos si esta abierta
+    if (db){
+        sqlite3_close(db);
+        db = nullptr;
+        qDebug() << "Conexion de la base de datos cerrada";
+    }
+
+    quit();
 }
