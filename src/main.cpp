@@ -7,54 +7,11 @@
 #include <pcap/pcap.h>
 #include <cstring>
 #include <QApplication>
-// #include "views/snifferwindow.h"
-// #include "controllers/pcapthread.h"
-#include "models/deviceModel.h"
-#include "controllers/deviceController.h"
-#include "views/deviceSelectionWindow.h"
 #include "views/mainViewManager.h"
-#ifndef _WIN32
-
-// Includes de linux
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-#include <arpa/inet.h>
-
-#else
-
-// Includes y definiciones de windows
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
-#pragma comment(lib, "ws2_32.lib") // Vincular la biblioteca de sockets de Windows
-
-// Definir los flags de TCP
-#define TH_FIN 0x01
-#define TH_SYN 0x02
-#define TH_RST 0x04
-#define TH_PUSH 0x08
-#define TH_ACK 0x10
-#define TH_URG 0x20
-
-#endif
 
 
 int main(int argc, char *argv[])
 {
-// #ifdef _WIN32
-//     WSADATA wsaData;
-//     // Inicializar WinSock
-//     if (WSAStartup(MAKEWORD(1, 1), &wsaData) != 0)
-//     {
-//         // std::cerr << "Error al inicializar WinSock." << std::endl;
-//         return 1;
-//     }
-// #endif
-
-
     //Aqui empieza la chota
 
     QApplication app(argc, argv);
@@ -62,18 +19,6 @@ int main(int argc, char *argv[])
     mainViewManager mainWindow;
     mainWindow.showMaximized();
 
-    // SnifferWindow window;
-
-    // window.show();  // Muestra la ventana principal
-
-    // PcapThread hilo_paquetes(&window,choosenDevName);
-
-    // hilo_paquetes.start();
-
-
-// #ifdef _WIN32
-//     WSACleanup();
-// #endif
     return app.exec();  // Inicia el bucle de eventos de Qt
 }
 
