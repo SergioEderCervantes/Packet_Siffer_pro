@@ -97,28 +97,6 @@ snifferWindow::snifferWindow(QWidget *parent)
 
 snifferWindow::~snifferWindow() {}
 
-void snifferWindow::applyTrafficFilter(const QString &filterType) {
-    qDebug() << " tipo de tráfico:" << filterType;
-
-
-    // Iterar sobre las filas de la tabla
-    for (int row = 0; row < packetTable->rowCount(); ++row) {
-        bool match = true;
-
-        // Obtener el valor del protocolo de la fila
-        QString protocol = packetTable->item(row, 5)->text().trimmed();
-
-        // Filtrar por tipo de tráfico (protocolo)
-        if (filterType != "Todos" && protocol.compare(filterType, Qt::CaseInsensitive) != 0) {
-            match = false;
-        }
-
-
-        qDebug() << "Fila:" << row << "Protocolo:" << protocol;
-        // Mostrar u ocultar la fila en base al resultado del filtro
-        packetTable->setRowHidden(row, !match);
-    }
-}
 
 
 void snifferWindow::processSqlQuery(const QString &query) {
@@ -130,7 +108,6 @@ void snifferWindow::processSqlQuery(const QString &query) {
         QString filterValue = query.split("WHERE", Qt::SkipEmptyParts).last().trimmed();
 
         // Aplicar el filtro como ejemplo
-        applyTrafficFilter("Todos");
     }
 }
 
@@ -138,6 +115,13 @@ void snifferWindow::addPacketToTable(const QStringList &packetData) {
     int row = packetTable->rowCount();
     packetTable->insertRow(row);
     for (int col = 0; col < packetData.size(); ++col) {
+
         packetTable->setItem(row, col, new QTableWidgetItem(packetData[col]));
     }
 }
+void snifferWindow::clearPacketTable() {
+    packetTable->clearContents(); // Limpia los datos de las celdas
+    packetTable->setRowCount(0);  // Borra todas las filas
+    qDebug() << "Tabla de paquetes limpiada.";
+}
+

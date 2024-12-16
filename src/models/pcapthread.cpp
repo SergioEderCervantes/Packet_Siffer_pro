@@ -83,63 +83,49 @@ struct udphdr
 #endif
 
 
-PcapThread::PcapThread(char* name, QObject *parent) :QThread(parent)
+PcapThread::PcapThread(char* name, QString filter, QObject *parent)
+    : QThread(parent), capdev(nullptr), stopRequested(false)
 {
-    choosenDevName = strdup(name);  // Usar strdup para copiar la cadena
+    choosenDevName = strdup(name);  // Copiar el nombre del dispositivo
+    this->filterType = filter;
 }
-PcapThread::~PcapThread(){
-    free(choosenDevName);
+PcapThread::~PcapThread() {
+    free(choosenDevName); // Liberar memoria asignada
+    if (capdev) {
+        pcap_close(capdev);
+    }
 }
-void PcapThread::run(){
-    std::cout << std::endl <<  "Name: " << this->choosenDevName  << std::endl;
+void PcapThread::run() {
+    qDebug() << "Capturando en dispositivo:" << choosenDevName;
 
     char errbuf[PCAP_ERRBUF_SIZE];
-    pcap_t *capdev = pcap_open_live(this->choosenDevName, BUFSIZ, 0, -1, errbuf);
+    capdev = pcap_open_live(this->choosenDevName, BUFSIZ, 0, 1000, errbuf);
 
-
-    if (capdev == NULL)
-    {
-        std::cout << "Error: pcap_open_live " << errbuf << std::endl;
-        exit(1);
+    if (!capdev) {
+        qDebug() << "Error al abrir dispositivo:" << errbuf;
+        emit finished();
+        return;
     }
 
-    // TODO: Tener en cuenta que el header_lenght esta en 14 pero deberiamos de ponerlo dinamicamente, de esta manera:
-    // int link_hdr_type = pcap_datalink(capdev);
-    // switch (link_hdr_type)
-    // {
-    // case DLT_NULL:
-    //     link_hdr_lenght = 4;
-    //     break;
-    // case DLT_EN10MB:
-    //     link_hdr_lenght = 14;
-    // default:
-    //     link_hdr_lenght = 0;
-    //     break;
-    // }
-
-    // lets limit the capture to 5 packets.
-    int packets_count = 0;
-    /*
-         * pcap_loop returns 0 upon success and -1 if it fails,
-         * we listen to this return value and print an error if
-         * pcap_loop failed
-         */
-    if (pcap_loop(capdev, packets_count, PcapThread::staticPacketHandler, reinterpret_cast<u_char *>(this)) < 0)
-    {
-        std::cout << "ERROR: pcap_loop() failed!" << std::endl
-                  << errbuf << std::endl;
-        exit(1);
+    // Bucle principal de captura
+    stopRequested = false;
+    if (pcap_loop(capdev, 0, PcapThread::staticPacketHandler, reinterpret_cast<u_char *>(this)) < 0) {
+        if (!stopRequested) {
+            qDebug() << "Error en pcap_loop";
+        }
     }
 
     pcap_close(capdev);
+    capdev = nullptr;
+    qDebug() << "Captura finalizada.";
     emit finished();
 }
+
 
 //Callback intermediario entre pcap_loop y packetHandler
 void PcapThread::staticPacketHandler(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *packetd_ptr) {
     // Convertir el puntero `user` a una instancia de `PcapThread`
     PcapThread *thread = reinterpret_cast<PcapThread *>(user);
-
     // Llamar al método no estático de la clase
     thread->packetHandler(user, pkthdr, packetd_ptr);
 }
@@ -241,10 +227,23 @@ void PcapThread::packetHandler(u_char *user, const struct pcap_pkthdr *pkthdr, c
     packetData << icmpType;  // ICMPType (ejemplo)
     packetData << icmpTypeCode;  // ICMPTypeCode (ejemplo)
 
-
-
+    QString protocol = packetData.at(5);
     // Emitir la señal para agregar el paquete a la GUI
+    if(this->filterType=="Todos"){
+        emit packetCaptured(packetData);
+    }
+    else{
+        if(this->filterType==protocol){
+            emit packetCaptured(packetData);
+        }
+    }
 
-    emit packetCaptured(packetData);
 }
 
+void PcapThread::handlerKiller() {
+    qDebug() << "Deteniendo captura...";
+    stopRequested = true;
+    if (capdev) {
+        pcap_breakloop(capdev); // Detener el pcap_loop de manera segura
+    }
+}

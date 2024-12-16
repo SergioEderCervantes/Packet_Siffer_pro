@@ -15,10 +15,12 @@ public:
     explicit mainViewManager(QWidget *parent = nullptr);
     snifferWindow* getSnifferWindow();
     void setCurrentView(QWidget *view);
+    QString getFilterType();
 private:
     //Contenedor principal
     QStackedWidget *mainContainer;
-     QComboBox *filterType;
+    QComboBox *filterType;
+
     //Vistas agregadas
     DeviceSelectionWindow *devSelectionWind;
     snifferWindow *captureWind;
@@ -29,7 +31,9 @@ private:
     void setupToolBar();
     void handleExitFromCapture();
     void saveCapturedData();
-
+    signals:
+        void killThread();
+        void clear();
 };
 
 #endif // MAINVIEWMANAGER_H

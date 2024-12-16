@@ -5,6 +5,7 @@
 #include <QAction>
 #include <QLineEdit>
 #include <QComboBox>
+#include <QTabWidget>
 #include <QVBoxLayout>
 #include <QMessageBox>
 #include <QDebug>
@@ -19,6 +20,7 @@ mainViewManager::mainViewManager(QWidget *parent)
     setCentralWidget(mainContainer);
 
     mainContainer->setCurrentWidget(devSelectionWind); // Establece la pantalla inicial
+
 }
 
 // Función para inicializar todas las vistas en el mainContainer
@@ -55,7 +57,7 @@ void mainViewManager::setupToolBar() {
     // Crear una barra de herramientas
     QToolBar *toolbar = addToolBar("Barra de herramientas");
 
-    // Agregar acciones a la barra de herramientas
+    // Acciones principales
     QAction *homeAction = new QAction("Inicio", this);
     connect(homeAction, &QAction::triggered, [this]() {
         mainContainer->setCurrentWidget(devSelectionWind);
@@ -69,35 +71,36 @@ void mainViewManager::setupToolBar() {
     toolbar->addAction(homeAction);
     toolbar->addAction(captureAction);
 
-    // Añadir un separador flexible para empujar los filtros al extremo derecho
+    // Separador flexible
     QWidget *spacer = new QWidget(this);
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    toolbar->addWidget(spacer); // Este separador empuja el resto de los elementos
+    toolbar->addWidget(spacer);
 
-    // ------------------------------
-    // Añadir filtro al extremo derecho
-    // ------------------------------
-    QComboBox *filterType = new QComboBox(this);
+    // Filtro de tráfico
+    this->filterType = new QComboBox(this);
     filterType->addItems({"Todos", "TCP", "UDP", "ICMP"});
+    filterType->setEnabled(true); // Deshabilitar por defecto
     toolbar->addWidget(filterType);
-    connect(filterType, &QComboBox::currentTextChanged, [this, filterType]() {
-        QString filter = filterType->currentText();
 
-        // Aplica la lógica de filtrado automáticamente al cambiar el filtro
-        if (captureWind) {
-            captureWind->applyTrafficFilter(filter);
+    // Detectar cambio de pestañas para habilitar/deshabilitar el filtro
+    connect(mainContainer, &QStackedWidget::currentChanged, this, [this](int index) {
+        if (mainContainer->currentWidget() == captureWind) {
+            filterType->setEnabled(false);
+        } else {
+            filterType->setEnabled(true);
         }
     });
-    // ------------------------------
+
+
     // Opción para salir de captura
-    // ------------------------------
     QAction *exitCaptureAction = new QAction("Salir de Captura", this);
     connect(exitCaptureAction, &QAction::triggered, [this]() {
         handleExitFromCapture();
+
+        // Restablecer filtro
+
     });
     toolbar->addAction(exitCaptureAction);
-
-
 }
 
 void mainViewManager::handleExitFromCapture() {
@@ -115,11 +118,20 @@ void mainViewManager::handleExitFromCapture() {
             // Lógica para guardar los datos
             qDebug() << "Guardando datos en la base de datos...";
             saveCapturedData();
+            filterType->setEnabled(true);
+            filterType->setCurrentIndex(0); // Seleccionar "Todos" por defecto
             // Cambiar a la pantalla de selección de dispositivos
+            emit clear();
+            emit killThread();
             setCurrentView(devSelectionWind);
         } else if (reply == QMessageBox::No) {
             // No guardar, solo redirigir
             qDebug() << "No se guardaron los datos.";
+            filterType->setEnabled(true);
+            filterType->setCurrentIndex(0); // Seleccionar "Todos" por defecto
+            emit clear();
+            emit killThread();
+
             setCurrentView(devSelectionWind);
         } else {
             // Cancelar, no hacer nada
@@ -140,7 +152,12 @@ void mainViewManager::saveCapturedData() {
 snifferWindow* mainViewManager::getSnifferWindow() {
     return this->captureWind;
 }
+QString mainViewManager::getFilterType(){
 
+    QString filter = filterType->currentText();
+
+    return filter;
+}
 void mainViewManager::setCurrentView(QWidget* view) {
     mainContainer->setCurrentWidget(view);
 }
