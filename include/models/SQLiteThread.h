@@ -21,6 +21,7 @@ signals:
 
 public slots:
     void savePacket(const QStringList &packetData, const QByteArray &rawData);
+    void onDeleteTable();
     void onFetchRowData(int row);
     void handleKiller();
 private:

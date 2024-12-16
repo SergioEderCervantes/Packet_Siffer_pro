@@ -23,7 +23,7 @@ void DeviceController::handleStartCapture(const QString &devName){
     connect(target, &snifferWindow::fetchRowData, sqliteThread, &SQLiteThread::onFetchRowData);
     connect(sqliteThread, &SQLiteThread::rowDataResponse, target, &snifferWindow::onRowDataResponse);
     connect(sqliteThread, &SQLiteThread::finished, sqliteThread, &SQLiteThread::deleteLater);
-
+    connect(this->MVM, &mainViewManager::deleteTable, sqliteThread, &SQLiteThread::onDeleteTable);
 
     //Conexion hilo killer
     connect(this->MVM, &mainViewManager::killThread, pcapThread, &PcapThread::handlerKiller);

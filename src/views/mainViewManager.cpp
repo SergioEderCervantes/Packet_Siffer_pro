@@ -94,60 +94,14 @@ void mainViewManager::setupToolBar() {
 
     // Opción para salir de captura
     QAction *exitCaptureAction = new QAction("Salir de Captura", this);
-    connect(exitCaptureAction, &QAction::triggered, [this]() {
-        handleExitFromCapture();
-
-        // Restablecer filtro
-
+    connect(exitCaptureAction, &QAction::triggered, this, [this]() {
+        this->handleExitFromCapture(nullptr); // Pasar nullptr al slot
     });
     toolbar->addAction(exitCaptureAction);
+    //Evento cuando cierra la aplicacion
+    connect(this, &mainViewManager::requestExit, this, &mainViewManager::handleExitFromCapture);
 }
 
-void mainViewManager::handleExitFromCapture() {
-    // Verifica si estamos en la pantalla de captura antes de mostrar el diálogo
-    if (mainContainer->currentWidget() == captureWind) {
-        // Mostrar un cuadro de diálogo para preguntar al usuario
-        QMessageBox::StandardButton reply = QMessageBox::question(
-            this,
-            "Guardar datos",
-            "¿Deseas guardar los datos antes de salir?",
-            QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel
-            );
-
-        if (reply == QMessageBox::Yes) {
-            // Lógica para guardar los datos
-            qDebug() << "Guardando datos en la base de datos...";
-            saveCapturedData();
-            filterType->setEnabled(true);
-            filterType->setCurrentIndex(0); // Seleccionar "Todos" por defecto
-            // Cambiar a la pantalla de selección de dispositivos
-            emit clear();
-            emit killThread();
-            setCurrentView(devSelectionWind);
-        } else if (reply == QMessageBox::No) {
-            // No guardar, solo redirigir
-            qDebug() << "No se guardaron los datos.";
-            filterType->setEnabled(true);
-            filterType->setCurrentIndex(0); // Seleccionar "Todos" por defecto
-            emit clear();
-            emit killThread();
-
-            setCurrentView(devSelectionWind);
-        } else {
-            // Cancelar, no hacer nada
-            qDebug() << "El usuario canceló la acción.";
-        }
-    } else {
-        qDebug() << "No estás en la pantalla de captura.";
-    }
-}
-
-void mainViewManager::saveCapturedData() {
-    // Aquí implementa la lógica para guardar los datos capturados en la base de datos
-    qDebug() << "Datos guardados exitosamente.";
-    // Por ejemplo:
-    // captureWind->saveToDatabase();
-}
 
 snifferWindow* mainViewManager::getSnifferWindow() {
     return this->captureWind;
@@ -161,3 +115,69 @@ QString mainViewManager::getFilterType(){
 void mainViewManager::setCurrentView(QWidget* view) {
     mainContainer->setCurrentWidget(view);
 }
+
+void mainViewManager::closeEvent(QCloseEvent *event) {
+    emit requestExit(event); // Pasar el event
+}
+
+void mainViewManager::handleExitFromCapture(QCloseEvent *event) {
+    // Verifica si estamos en la pantalla de captura
+    if (mainContainer->currentWidget() != captureWind) {
+        qDebug() << "No estás en la pantalla de captura.";
+        if (event) event->accept();
+        return;
+    }
+
+    // Mostrar cuadro de diálogo al usuario
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        "Guardar datos",
+        "¿Deseas guardar los datos antes de salir?",
+        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel
+        );
+
+    switch (reply) {
+    case QMessageBox::Yes:
+        handleSaveAndExit();
+        if (event) event->accept();
+        break;
+
+    case QMessageBox::No:
+        handleDiscardAndExit();
+        if (event) event->accept();
+        break;
+
+    case QMessageBox::Cancel:
+        qDebug() << "El usuario canceló la acción.";
+        if (event) event->ignore();
+        break;
+
+    default:
+        if(event) event->accept();
+        break;
+    }
+}
+
+void mainViewManager::handleSaveAndExit() {
+    qDebug() << "Guardando datos en la base de datos...";
+    resetFilters();
+    emit clear();
+    emit killThread();
+    setCurrentView(devSelectionWind);
+}
+
+void mainViewManager::handleDiscardAndExit() {
+    qDebug() << "No se guardaron los datos.";
+    emit deleteTable(); // Borrar la tabla de la base de datos
+    resetFilters();
+    emit clear();
+    emit killThread();
+    setCurrentView(devSelectionWind);
+}
+
+void mainViewManager::resetFilters() {
+    filterType->setEnabled(true);
+    filterType->setCurrentIndex(0); // Seleccionar "Todos" por defecto
+}
+
+

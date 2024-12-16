@@ -8,6 +8,7 @@
 #include <QStackedWidget>
 #include "views/deviceSelectionWindow.h"
 #include "views/snifferWindow.h"
+#include <QCloseEvent>
 class mainViewManager : public QMainWindow {
     Q_OBJECT
 
@@ -29,11 +30,18 @@ private:
     void setupViews();
     void setupMenuBar();
     void setupToolBar();
-    void handleExitFromCapture();
-    void saveCapturedData();
-    signals:
-        void killThread();
-        void clear();
+    void handleSaveAndExit();
+    void handleDiscardAndExit();
+    void resetFilters();
+private slots:
+    void handleExitFromCapture(QCloseEvent *event = nullptr);
+protected:
+    void closeEvent(QCloseEvent *event) override;
+signals:
+    void deleteTable();
+    void killThread();
+    void clear();
+    void requestExit(QCloseEvent *event = nullptr);
 };
 
 #endif // MAINVIEWMANAGER_H

@@ -184,6 +184,16 @@ void SQLiteThread::onFetchRowData(int row){
     emit rowDataResponse(packetData,rawData);
 }
 
+void SQLiteThread::onDeleteTable(){
+    if (!db) return;
+    QString query = QString("DROP TABLE IF EXISTS %1;").arg(tableName);
+    int rc = sqlite3_exec(db,query.toUtf8().data(),nullptr, nullptr, nullptr);
+    if (rc != SQLITE_OK){
+        qDebug() << "Error al borrar la tabla de la base de datos: " << sqlite3_errmsg(db);
+    } else{
+        qDebug() << "La tabla fue borrada con exito";
+    }
+}
 
 void SQLiteThread::handleKiller(){
     qDebug() << "Cerrando hilo SQLiteThread de manera segura...";
