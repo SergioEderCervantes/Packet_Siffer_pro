@@ -74,15 +74,6 @@ void SQLiteThread::run(){
 
 void SQLiteThread::savePacket(const QStringList &packedData, const QByteArray &rawData){
     if (!db) return;
-    // Imprimir en formato hexadecimal
-    qDebug() << "Raw (hex):" << rawData.toHex(' ');
-
-    // Imprimir cada byte como valor entero para mayor claridad
-    QString binaryRepresentation;
-    for (char byte : rawData) {
-        binaryRepresentation += QString::asprintf("%02X ", static_cast<unsigned char>(byte));
-    }
-    qDebug() << "Raw (binario):" << binaryRepresentation;
 
     QStringList columns = {"packet_id", "srcIP", "dstIP", "tos", "ttl", "protocolo", "flags", "srcPort",
                            "dstPort", "ICMPType", "ICMPTypeCode", "raw"};
@@ -130,32 +121,19 @@ void SQLiteThread::printStoredData() {
     QString selectQuery = QString("SELECT * FROM %1;").arg(tableName);
 
     char *errMsg = nullptr;
-    int rc = sqlite3_exec(db, selectQuery.toUtf8().data(), callback, nullptr, &errMsg);
+    // int rc = sqlite3_exec(db, selectQuery.toUtf8().data(), callback, nullptr, &errMsg);
 
-    if (rc != SQLITE_OK) {
-        qDebug() << "Error ejecutando SELECT:" << errMsg;
-        sqlite3_free(errMsg);
-    }
-}
-
-int SQLiteThread::callback(void *unused, int argc, char **argv, char**colNames){
-    Q_UNUSED(unused);
-    QStringList row;
-    for (int i = 0; i < argc; i++) {
-        QString col = colNames[i] ? QString(colNames[i]) : "NULL";
-        QString value = argv[i] ? QString(argv[i]) : "NULL";
-        row << QString("%1: %2").arg(col).arg(value);
-    }
-    qDebug() << row.join(" | ");
-    return 0;
+    // if (rc != SQLITE_OK) {
+    //     qDebug() << "Error ejecutando SELECT:" << errMsg;
+    //     sqlite3_free(errMsg);
+    // }
 }
 
 
-void SQLiteThread::retrieveBlobWithStatement(int packetId) {
-    // Crear la consulta con un marcador de parámetro
-    QString query = QString("SELECT raw FROM %1 WHERE id = ?;").arg(tableName);
-
+void SQLiteThread::onFetchRowData(int row){
+    QString query = QString("SELECT * FROM %1 WHERE id = ?;").arg(tableName);
     sqlite3_stmt *stmt;
+
     int rc = sqlite3_prepare_v2(db, query.toUtf8().data(), -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
         qDebug() << "Error preparando la consulta: " << sqlite3_errmsg(db);
@@ -163,34 +141,44 @@ void SQLiteThread::retrieveBlobWithStatement(int packetId) {
     }
 
     // Vincular el parámetro (ID del paquete)
-    sqlite3_bind_int(stmt, 1, packetId);
+    rc = sqlite3_bind_int(stmt, 1, row);
+    if (rc != SQLITE_OK) {
+        qDebug() << "Error vinculando el parámetro ID:" << sqlite3_errmsg(db);
+        sqlite3_finalize(stmt);
+        return;
+    }
 
-    // Ejecutar el statement y procesar los resultados
+    QStringList packetData;
+    QByteArray rawData;
+    // Ejecutar el statement
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        // Obtener el BLOB y su tamaño
-        const void *blobData = sqlite3_column_blob(stmt, 0);
-        int blobSize = sqlite3_column_bytes(stmt, 0);
+        // Limpiar cualquier dato previo en packetData
+        packetData.clear();
+
+        // Extraer las columnas 2 a 12 como QStrings y agregar a packetData
+        for (int col = 1; col <= 11; ++col) { // Columnas 2 a 12 son de índice 1 a 11
+            const unsigned char *text = sqlite3_column_text(stmt, col);
+            packetData.append(text ? reinterpret_cast<const char *>(text) : "");
+        }
+
+        // Extraer la columna 13 (raw) como un QByteArray
+        const void *blobData = sqlite3_column_blob(stmt, 12);
+        int blobSize = sqlite3_column_bytes(stmt, 12);
 
         if (blobData && blobSize > 0) {
-            // Convertir el BLOB en un QByteArray
-            QByteArray rawData(reinterpret_cast<const char *>(blobData), blobSize);
-
-            // Imprimir el BLOB en formato hexadecimal
-            qDebug() << "Raw recuperado (hex): " << rawData.toHex(' ').toStdString();
-
-            // (Opcional) Mostrar como ASCII legible
-            QString rawAscii;
-            for (char c : rawData) {
-                rawAscii += (c >= 32 && c <= 126) ? c : '.';
-            }
-            qDebug() << "Raw (ASCII): " << rawAscii.toStdString();
+            rawData = QByteArray(reinterpret_cast<const char *>(blobData), blobSize);
         } else {
-            qDebug() << "El BLOB está vacío o no existe.";
+            rawData.clear();
+            qDebug() << "El campo raw está vacío o no existe.";
         }
     } else {
-        qDebug() << "No se encontró ningún resultado para el ID del paquete: " << packetId;
+        qDebug() << "No se encontró ningún resultado para el ID:" << row;
+        sqlite3_finalize(stmt);
+        return;
     }
 
     // Finalizar el statement
     sqlite3_finalize(stmt);
+
+    emit rowDataResponse(packetData,rawData);
 }

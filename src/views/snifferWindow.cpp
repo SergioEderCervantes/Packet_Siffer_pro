@@ -20,6 +20,8 @@ snifferWindow::snifferWindow(QWidget *parent)
     packetTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     packetTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
+    connect(packetTable,&QTableWidget::itemSelectionChanged,this,&snifferWindow::onRowSelected);
+
     // ------------------------------
     // Crear el cuadro de consultas SQL
     // ------------------------------
@@ -37,13 +39,13 @@ snifferWindow::snifferWindow(QWidget *parent)
     // ------------------------------
     // Crear el visor de detalles
     // ------------------------------
-    QTreeWidget *detailsView = new QTreeWidget(this);
+    this->detailsView = new QTreeWidget(this);
     detailsView->setHeaderLabel("Detalles del paquete");
 
     // ------------------------------
     // Crear el visor de datos crudos
     // ------------------------------
-    QTextEdit *rawDataView = new QTextEdit(this);
+    this->rawDataView = new QTextEdit(this);
     rawDataView->setReadOnly(true);
     rawDataView->setText("Aquí se mostrarán los datos crudos del paquete seleccionado.");
 
@@ -149,5 +151,46 @@ void snifferWindow::addPacketToTable(const QStringList &packetData) {
     packetTable->insertRow(row);
     for (int col = 0; col < packetData.size(); ++col) {
         packetTable->setItem(row, col, new QTableWidgetItem(packetData[col]));
+    }
+}
+
+
+void snifferWindow::onRowSelected(){
+    // Obtener la fila seleccionada
+    QList<QTableWidgetItem*> selectedItems = packetTable->selectedItems();
+    if (!selectedItems.isEmpty()) {
+        int row = packetTable->currentRow();  // Número de renglón seleccionado
+
+        // Enviar la fila al hilo de base de datos
+        emit fetchRowData(row);  // Emite una señal para que el hilo procese la query
+    }
+}
+
+void snifferWindow::onRowDataResponse(QStringList &packetData, QByteArray &rawData){
+    // Limpiar el contenido actual de los visores
+    detailsView->clear();
+    rawDataView->clear();
+
+    // Llenar el QTreeWidget con la información de packetData
+    QStringList labels = {
+        "IP de Origen", "IP de Destino", "ToS", "TTL",
+        "Protocolo", "Flags", "Puerto de Origen", "Puerto de Destino",
+        "Tipo ICMP", "Código ICMP"
+    };
+
+    for (int i = 0; i < labels.size() && i < packetData.size(); ++i) {
+        QTreeWidgetItem *item = new QTreeWidgetItem(detailsView);
+        item->setText(0, QString("%1: %2").arg(labels[i], packetData[i]));
+    }
+
+    // Asegurarse de que todos los nodos sean visibles
+    detailsView->expandAll();
+
+    // Llenar el QTextEdit con rawData en formato hexadecimal
+    if (!rawData.isEmpty()) {
+        QString rawHex = rawData.toHex(' ').toUpper(); // Convertir a Hexadecimal
+        rawDataView->setText(rawHex);
+    } else {
+        rawDataView->setText("No hay datos crudos disponibles.");
     }
 }

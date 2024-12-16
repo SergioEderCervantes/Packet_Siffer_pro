@@ -16,19 +16,18 @@ public:
 
     void run() override;
 signals:
+    void rowDataResponse(QStringList &packetdata,QByteArray &rawData);
     void finished();
 
 public slots:
     void savePacket(const QStringList &packetData, const QByteArray &rawData);
-
+    void onFetchRowData(int row);
 private:
     static const std::string DATABASE_NAME;
     sqlite3 *db;
     const QString tableName;
 
     QString generateTableName(const QString &interfaceName);
-    static int callback(void *unused, int argc, char **argv, char**colNames);
-
     void retrieveBlobWithStatement(int packetId);
 };
 
