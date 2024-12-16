@@ -7,6 +7,8 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QLabel>
+#include <QRegularExpression>
+
 snifferWindow::snifferWindow(QWidget *parent)
     : QWidget(parent) {
     // ------------------------------
@@ -14,7 +16,7 @@ snifferWindow::snifferWindow(QWidget *parent)
     // ------------------------------
     packetTable = new QTableWidget(this);
     packetTable->setColumnCount(11);
-    packetTable->setHorizontalHeaderLabels({"Id", "SrcIP", "DstIP", "Tos", "TTL",
+    packetTable->setHorizontalHeaderLabels({"PacketId", "SrcIP", "DstIP", "TOS", "TTL",
                                             "Protocolo", "Flags", "SrcPort",
                                             "DstPort", "ICMPType", "ICMPTypeCode"});
     packetTable->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -94,6 +96,11 @@ snifferWindow::snifferWindow(QWidget *parent)
 
 snifferWindow::~snifferWindow() {}
 
+bool snifferWindow::validateQueryFormat(const QString &query) {
+    QRegularExpression regex("^SELECT\\s+.*\\s+FROM\\s+actual\\s+.*;$", QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatch match = regex.match(query);
+    return match.hasMatch();
+}
 
 void snifferWindow::openSqlPopup() {
     QDialog *dialog = new QDialog(this);
@@ -123,21 +130,20 @@ void snifferWindow::openSqlPopup() {
     layout->addWidget(executeButton);
     layout->addWidget(resultView);
 
-    connect(executeButton, &QPushButton::clicked, this, [sqlInput, resultView]() {
+    connect(executeButton, &QPushButton::clicked, this, [this, sqlInput, resultView]() {
         QString query = sqlInput->toPlainText().trimmed();
-        if (!query.startsWith("SELECT", Qt::CaseInsensitive)) {
-            resultView->setText("Solo se permiten consultas SELECT.");
+        if (!validateQueryFormat(query)) {
+            resultView->setText("Formato de consulta no válido. Debe seguir el formato: SELECT ... FROM actual ... ;");
             return;
+        }else {
+            emit exec_query(query, resultView);
         }
-        // Simulación de ejecución de consulta
-        resultView->setText("Ejecutando consulta:\n" + query);
     });
 
     dialog->setLayout(layout);
     dialog->resize(400, 300);
     dialog->show();
 }
-
 
 
 void snifferWindow::addPacketToTable(const QStringList &packetData) {

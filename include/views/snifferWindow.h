@@ -27,6 +27,9 @@ private:
     QTreeWidget *detailsView;       //Cuadro de detalles
     QTextEdit *rawDataView;         //Cuadro de raw
     QPushButton *openSqlButton;     //Boton para abrir sql
+
+    // metodos varios
+    bool validateQueryFormat(const QString &query);
 public slots:
     void addPacketToTable(const QStringList &packetData); // Añadir paquetes a la tabla
     void onRowSelected();
@@ -36,6 +39,7 @@ private slots:
     void openSqlPopup();
 signals:
     void fetchRowData(int row);
+    void exec_query(QString &query, QTextEdit *resultView);
 
 };
 
