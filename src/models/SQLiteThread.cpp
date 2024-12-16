@@ -132,6 +132,7 @@ void SQLiteThread::printStoredData() {
 
 
 void SQLiteThread::onFetchRowData(int row){
+    row ++;
     QString query = QString("SELECT * FROM %1 WHERE id = ?;").arg(tableName);
     sqlite3_stmt *stmt;
 

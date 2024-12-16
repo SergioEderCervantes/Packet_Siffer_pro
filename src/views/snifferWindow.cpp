@@ -6,7 +6,7 @@
 #include <QPushButton>
 #include <QMessageBox>
 #include <QDebug>
-
+#include <QLabel>
 snifferWindow::snifferWindow(QWidget *parent)
     : QWidget(parent) {
     // ------------------------------
@@ -23,95 +23,122 @@ snifferWindow::snifferWindow(QWidget *parent)
     connect(packetTable,&QTableWidget::itemSelectionChanged,this,&snifferWindow::onRowSelected);
 
     // ------------------------------
-    // Crear el cuadro de consultas SQL
+    // Botón para abrir el panel de consultas
     // ------------------------------
-    sqlTextArea = new QTextEdit(this);
-    sqlTextArea->setPlaceholderText("Escribe tu consulta SQL aquí (solo comandos SELECT)");
-    executeSqlButton = new QPushButton("Ejecutar Consulta", this);
-
-    // Crear un layout para el área de consultas SQL
-    QWidget *sqlQueryWidget = new QWidget(this);
-    QVBoxLayout *sqlLayout = new QVBoxLayout(sqlQueryWidget);
-    sqlLayout->addWidget(sqlTextArea);
-    sqlLayout->addWidget(executeSqlButton);
-    sqlQueryWidget->setLayout(sqlLayout);
+    openSqlButton = new QPushButton("Abrir Panel de Consultas", this);
+    openSqlButton->setFixedHeight(40);
+    openSqlButton->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    openSqlButton->setMaximumWidth(200); // Aproximadamente el 20% si la ventana mide 1000px
+    connect(openSqlButton, &QPushButton::clicked, this, &snifferWindow::openSqlPopup);
 
     // ------------------------------
-    // Crear el visor de detalles
+    // Crear el visor de datos crudos con un título
     // ------------------------------
-    this->detailsView = new QTreeWidget(this);
-    detailsView->setHeaderLabel("Detalles del paquete");
-
-    // ------------------------------
-    // Crear el visor de datos crudos
-    // ------------------------------
-    this->rawDataView = new QTextEdit(this);
+    QWidget *rawContainer = new QWidget(this);
+    QVBoxLayout *rawLayout = new QVBoxLayout(rawContainer);
+    QLabel *rawLabel = new QLabel("Raw del paquete", rawContainer);
+    rawLabel->setAlignment(Qt::AlignLeft);
+    rawDataView = new QTextEdit(this);
     rawDataView->setReadOnly(true);
     rawDataView->setText("Aquí se mostrarán los datos crudos del paquete seleccionado.");
+
+    rawLayout->addWidget(rawLabel);
+    rawLayout->addWidget(rawDataView);
+    rawLayout->setContentsMargins(10, 10, 10, 10); // Padding para raw
+    rawContainer->setLayout(rawLayout);
+
+    // ------------------------------
+    // Crear el visor de detalles con padding
+    // ------------------------------
+    QWidget *detailsContainer = new QWidget(this);
+    QVBoxLayout *detailsLayout = new QVBoxLayout(detailsContainer);
+    QLabel *detailsLabel = new QLabel("Detalles del paquete", detailsContainer);
+    detailsLabel->setAlignment(Qt::AlignLeft);
+    detailsView = new QTreeWidget(this);
+    detailsView->setHeaderLabel("Detalles del paquete");
+
+    detailsLayout->addWidget(detailsLabel);
+    detailsLayout->addWidget(detailsView);
+    detailsLayout->setContentsMargins(10, 10, 10, 10); // Padding similar al de raw
+    detailsContainer->setLayout(detailsLayout);
 
     // ------------------------------
     // Crear divisores principales (QSplitter)
     // ------------------------------
-    // Divisor horizontal superior: tabla de paquetes y consultas SQL
-    QSplitter *topSplitter = new QSplitter(Qt::Horizontal, this);
-    topSplitter->addWidget(packetTable);
-    topSplitter->addWidget(sqlQueryWidget);
+    // Divisor derecho: datos crudos (arriba) y detalles (abajo)
+    QSplitter *rightSplitter = new QSplitter(Qt::Vertical, this);
+    rightSplitter->addWidget(rawContainer);
+    rightSplitter->addWidget(detailsContainer);
 
-    // Divisor vertical principal: parte superior y visor de detalles + datos crudos
-    QSplitter *verticalSplitter = new QSplitter(Qt::Vertical, this);
-    verticalSplitter->addWidget(topSplitter);
+    // Divisor principal: tabla de paquetes (izquierda) y panel derecho
+    QSplitter *mainSplitter = new QSplitter(Qt::Horizontal, this);
+    mainSplitter->addWidget(packetTable);
+    mainSplitter->addWidget(rightSplitter);
 
-    // Divisor horizontal inferior: detalles y datos crudos
-    QSplitter *bottomSplitter = new QSplitter(Qt::Horizontal, this);
-    bottomSplitter->addWidget(detailsView);
-    bottomSplitter->addWidget(rawDataView);
-
-    // Agregar el divisor inferior al divisor principal
-    verticalSplitter->addWidget(bottomSplitter);
+    // Establecer tamaños iniciales: 70% para la tabla, 30% para el panel derecho
+    QList<int> sizes;
+    sizes << 700 << 300; // Asumiendo 1000px de ancho total
+    mainSplitter->setSizes(sizes);
 
     // ------------------------------
     // Layout principal
     // ------------------------------
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->addWidget(verticalSplitter);
+    mainLayout->addWidget(openSqlButton, 0, Qt::AlignLeft); // Botón para abrir consultas SQL
+    mainLayout->addWidget(mainSplitter);
     setLayout(mainLayout);
 
     // Configurar el tamaño inicial de la ventana
     resize(1000, 800);
-
-    // ------------------------------
-    // Conectar el botón de consulta SQL
-    // ------------------------------
-    connect(executeSqlButton, &QPushButton::clicked, this, [this]() {
-        QString query = sqlTextArea->toPlainText().trimmed();
-
-        // Validar que el comando comience con SELECT
-        if (!query.startsWith("SELECT", Qt::CaseInsensitive)) {
-            QMessageBox::warning(this, "Consulta no válida",
-                                 "Solo se permiten comandos SELECT en las consultas SQL.");
-            return;
-        }
-
-        // Procesar la consulta
-        processSqlQuery(query);
-    });
 }
 
 snifferWindow::~snifferWindow() {}
 
 
+void snifferWindow::openSqlPopup() {
+    QDialog *dialog = new QDialog(this);
+    dialog->setWindowTitle("Panel de Consultas SQL");
+    dialog->setModal(false); // No bloquear la ventana principal
 
-void snifferWindow::processSqlQuery(const QString &query) {
-    // Simulación de ejecución de consulta
-    QMessageBox::information(this, "Consulta SQL", "Consulta ejecutada:\n" + query);
+    // Crear el layout del popup
+    QVBoxLayout *layout = new QVBoxLayout(dialog);
 
-    // Filtrar filas según una lógica de SQL (simulación)
-    if (query.contains("WHERE", Qt::CaseInsensitive)) {
-        QString filterValue = query.split("WHERE", Qt::SkipEmptyParts).last().trimmed();
+    // Leyenda al inicio del panel
+    QLabel *infoLabel = new QLabel("En este panel solo es posible hacer consulta de actual tabla, la cual se referencia con la palabra 'actual'", dialog);
+    infoLabel->setWordWrap(true);
 
-        // Aplicar el filtro como ejemplo
-    }
+    // Crear el área de texto para consultas SQL
+    QTextEdit *sqlInput = new QTextEdit(dialog);
+    sqlInput->setPlaceholderText("i.e: SELECT * FROM actual WHERE protocol = 'TCP';");
+    sqlInput->setFixedHeight(100);
+
+    // Crear el botón de ejecutar consulta
+    QPushButton *executeButton = new QPushButton("Ejecutar", dialog);
+    QTextEdit *resultView = new QTextEdit(dialog);
+    resultView->setReadOnly(true);
+    resultView->setPlaceholderText("Aquí se mostrarán los resultados de la consulta.");
+
+    layout->addWidget(infoLabel);
+    layout->addWidget(sqlInput);
+    layout->addWidget(executeButton);
+    layout->addWidget(resultView);
+
+    connect(executeButton, &QPushButton::clicked, this, [sqlInput, resultView]() {
+        QString query = sqlInput->toPlainText().trimmed();
+        if (!query.startsWith("SELECT", Qt::CaseInsensitive)) {
+            resultView->setText("Solo se permiten consultas SELECT.");
+            return;
+        }
+        // Simulación de ejecución de consulta
+        resultView->setText("Ejecutando consulta:\n" + query);
+    });
+
+    dialog->setLayout(layout);
+    dialog->resize(400, 300);
+    dialog->show();
 }
+
+
 
 void snifferWindow::addPacketToTable(const QStringList &packetData) {
     int row = packetTable->rowCount();
@@ -121,10 +148,14 @@ void snifferWindow::addPacketToTable(const QStringList &packetData) {
         packetTable->setItem(row, col, new QTableWidgetItem(packetData[col]));
     }
 }
-void snifferWindow::clearPacketTable() {
+void snifferWindow::clearPacketTableAndOthers() {
     packetTable->clearContents(); // Limpia los datos de las celdas
     packetTable->setRowCount(0);  // Borra todas las filas
     qDebug() << "Tabla de paquetes limpiada.";
+    rawDataView->clear();
+    rawDataView->setText("Aquí se mostrarán los datos crudos del paquete seleccionado.");
+    detailsView->clear();
+    detailsView->setHeaderLabel("Detalles del paquete");
 }
 
 
@@ -147,7 +178,7 @@ void snifferWindow::onRowDataResponse(QStringList &packetData, QByteArray &rawDa
 
     // Llenar el QTreeWidget con la información de packetData
     QStringList labels = {
-        "IP de Origen", "IP de Destino", "ToS", "TTL",
+        "Packet_id" , "IP de Origen", "IP de Destino", "ToS", "TTL",
         "Protocolo", "Flags", "Puerto de Origen", "Puerto de Destino",
         "Tipo ICMP", "Código ICMP"
     };
