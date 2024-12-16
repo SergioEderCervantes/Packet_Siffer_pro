@@ -5,7 +5,7 @@
 #include <QStringList>
 #include <sqlite3.h>
 #include <string>
-
+#include <QTextEdit>
 class SQLiteThread : public QThread{
     Q_OBJECT
 
@@ -24,6 +24,7 @@ public slots:
     void onDeleteTable();
     void onFetchRowData(int row);
     void handleKiller();
+    void onExec_query(QString &query, QTextEdit *resultView);
 private:
     static const std::string DATABASE_NAME;
     sqlite3 *db;

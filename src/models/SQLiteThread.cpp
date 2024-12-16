@@ -51,18 +51,18 @@ void SQLiteThread::run(){
     QString createTableQuery = QString(
         "CREATE TABLE IF NOT EXISTS %1 ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "packet_id TEXT,"
-        "srcIP TEXT, "
-        "dstIP TEXT,"
-        "tos TEXT, "
-        "ttl TEXT,"
-        "protocolo TEXT,"
-        "flags TEXT,"
-        "srcPort TEXT,"
-        "dstPort TEXT,"
+        "PacketId TEXT,"
+        "SrcIP TEXT, "
+        "DstIP TEXT,"
+        "TOS TEXT, "
+        "TTL TEXT,"
+        "Protocolo TEXT,"
+        "Flags TEXT,"
+        "SrcPort TEXT,"
+        "DstPort TEXT,"
         "ICMPType TEXT,"
         "ICMPTypeCode TEXT,"
-        "raw BLOB);"
+        "Raw BLOB);"
                                    ).arg(this->tableName);
 
     rc = sqlite3_exec(db,createTableQuery.toUtf8().data(),nullptr,nullptr,nullptr);
@@ -76,8 +76,8 @@ void SQLiteThread::run(){
 void SQLiteThread::savePacket(const QStringList &packedData, const QByteArray &rawData){
     if (!db) return;
 
-    QStringList columns = {"packet_id", "srcIP", "dstIP", "tos", "ttl", "protocolo", "flags", "srcPort",
-                           "dstPort", "ICMPType", "ICMPTypeCode", "raw"};
+    QStringList columns = {"PacketId", "SrcIP", "DstIP", "TOS", "TTL", "Protocolo", "Flags", "SrcPort",
+                           "DstPort", "ICMPType", "ICMPTypeCode", "Raw"};
 
 
     // Preparar la Query
@@ -132,6 +132,7 @@ void SQLiteThread::printStoredData() {
 
 
 void SQLiteThread::onFetchRowData(int row){
+    row ++;
     QString query = QString("SELECT * FROM %1 WHERE id = ?;").arg(tableName);
     sqlite3_stmt *stmt;
 
@@ -182,6 +183,57 @@ void SQLiteThread::onFetchRowData(int row){
     sqlite3_finalize(stmt);
 
     emit rowDataResponse(packetData,rawData);
+}
+void SQLiteThread::onExec_query(QString &query, QTextEdit *resultView) {
+    if (!db) return;
+
+    // Reemplazar "actual" por el valor real de tableName
+    query.replace("actual", tableName);
+    qDebug() << "Ejecutando query: " << query;
+
+    sqlite3_stmt *stmt = nullptr;
+
+    // Preparar la consulta
+    int rc = sqlite3_prepare_v2(db, query.toUtf8().data(), -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        QString errorMsg = QString("Error preparando la consulta: %1").arg(sqlite3_errmsg(db));
+        qDebug() << errorMsg;
+        resultView->setText(errorMsg);
+        return;
+    }
+
+    // Construir una tabla ASCII para mostrar en resultView
+    QString resultText;
+    int columnCount = sqlite3_column_count(stmt);
+
+    // Encabezados de la tabla
+    QStringList headers;
+    for (int i = 0; i < columnCount; ++i) {
+        headers << QString::fromUtf8(sqlite3_column_name(stmt, i));
+    }
+    resultText += headers.join(" | ") + "\n";
+    resultText += QString("-").repeated(resultText.length()) + "\n";
+
+    // Iterar por las filas de la consulta
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        QStringList rowValues;
+        for (int i = 0; i < columnCount; ++i) {
+            const unsigned char *value = sqlite3_column_text(stmt, i);
+            rowValues << (value ? QString::fromUtf8(reinterpret_cast<const char*>(value)) : "NULL");
+        }
+        resultText += rowValues.join(" | ") + "\n";
+    }
+
+    // Finalizar la consulta
+    sqlite3_finalize(stmt);
+
+    // Mostrar resultados en el resultView
+    if (resultText.isEmpty()) {
+        resultText = "La consulta no devolvió ningún resultado.";
+    }
+    resultView->setText(resultText);
+
+    qDebug() << "Query ejecutada correctamente.";
 }
 
 void SQLiteThread::onDeleteTable(){
