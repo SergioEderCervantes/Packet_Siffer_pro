@@ -17,7 +17,7 @@ public:
     ~snifferWindow();
 
     // Métodos para aplicar filtros y procesar consultas SQL
-    void applyTrafficFilter(const QString &query, const QString &filterType);
+    void applyTrafficFilter(const QString &filterType);
     void processSqlQuery(const QString &query);
 
 private slots:

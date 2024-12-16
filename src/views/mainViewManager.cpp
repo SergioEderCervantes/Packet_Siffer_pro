@@ -69,43 +69,25 @@ void mainViewManager::setupToolBar() {
     toolbar->addAction(homeAction);
     toolbar->addAction(captureAction);
 
-    // ------------------------------
-    // Añadir buscador y filtro a la barra de herramientas
-    // ------------------------------
-    // Campo de texto para buscar
-    QLineEdit *searchField = new QLineEdit(this);
-    searchField->setPlaceholderText("Buscar tráfico...");
+    // Añadir un separador flexible para empujar los filtros al extremo derecho
+    QWidget *spacer = new QWidget(this);
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    toolbar->addWidget(spacer); // Este separador empuja el resto de los elementos
 
-    // ComboBox para seleccionar tipo de filtro
+    // ------------------------------
+    // Añadir filtro al extremo derecho
+    // ------------------------------
     QComboBox *filterType = new QComboBox(this);
-    filterType->addItems({"TCP", "UDP", "ICMP", "Todos"});
-    filterType->setCurrentIndex(3); // Por defecto, "Todos"
-
-    // Conexión para aplicar filtros
-    connect(searchField, &QLineEdit::returnPressed, [this, searchField, filterType]() {
-        QString query = searchField->text();
-        QString filter = filterType->currentText();
-
-        // Aplica la lógica de filtrado
-        if (captureWind) {
-            captureWind->applyTrafficFilter(query, filter);
-        }
-    });
-
-    connect(filterType, &QComboBox::currentTextChanged, [this, searchField, filterType]() {
-        QString query = searchField->text();
+    filterType->addItems({"Todos", "TCP", "UDP", "ICMP"});
+    toolbar->addWidget(filterType);
+    connect(filterType, &QComboBox::currentTextChanged, [this, filterType]() {
         QString filter = filterType->currentText();
 
         // Aplica la lógica de filtrado automáticamente al cambiar el filtro
         if (captureWind) {
-            captureWind->applyTrafficFilter(query, filter);
+            captureWind->applyTrafficFilter(filter);
         }
     });
-
-    // Añadir los widgets a la barra de herramientas
-    toolbar->addWidget(searchField);
-    toolbar->addWidget(filterType);
-
     // ------------------------------
     // Opción para salir de captura
     // ------------------------------
@@ -113,8 +95,9 @@ void mainViewManager::setupToolBar() {
     connect(exitCaptureAction, &QAction::triggered, [this]() {
         handleExitFromCapture();
     });
-
     toolbar->addAction(exitCaptureAction);
+
+
 }
 
 void mainViewManager::handleExitFromCapture() {

@@ -3,6 +3,8 @@
 
 
 #include <QMainWindow>
+#include <QComboBox>
+
 #include <QStackedWidget>
 #include "views/deviceSelectionWindow.h"
 #include "views/snifferWindow.h"
@@ -16,7 +18,7 @@ public:
 private:
     //Contenedor principal
     QStackedWidget *mainContainer;
-
+     QComboBox *filterType;
     //Vistas agregadas
     DeviceSelectionWindow *devSelectionWind;
     snifferWindow *captureWind;

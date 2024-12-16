@@ -97,39 +97,29 @@ snifferWindow::snifferWindow(QWidget *parent)
 
 snifferWindow::~snifferWindow() {}
 
-void snifferWindow::applyTrafficFilter(const QString &query, const QString &filterType) {
-    // Mostrar en consola el filtro aplicado
-    qDebug() << "Filtrando con query:" << query << "y tipo de tráfico:" << filterType;
+void snifferWindow::applyTrafficFilter(const QString &filterType) {
+    qDebug() << " tipo de tráfico:" << filterType;
+
 
     // Iterar sobre las filas de la tabla
     for (int row = 0; row < packetTable->rowCount(); ++row) {
         bool match = true;
 
-        // Verificar el tipo de tráfico (columna "Protocolo", índice 5)
-        QString protocol = packetTable->item(row, 5)->text();
-        if (filterType != "Todos" && protocol != filterType) {
+        // Obtener el valor del protocolo de la fila
+        QString protocol = packetTable->item(row, 5)->text().trimmed();
+
+        // Filtrar por tipo de tráfico (protocolo)
+        if (filterType != "Todos" && protocol.compare(filterType, Qt::CaseInsensitive) != 0) {
             match = false;
         }
 
-        // Verificar si el texto de búsqueda está presente
-        if (!query.isEmpty()) {
-            bool queryFound = false;
-            for (int col = 0; col < packetTable->columnCount(); ++col) {
-                if (packetTable->item(row, col) &&
-                    packetTable->item(row, col)->text().contains(query, Qt::CaseInsensitive)) {
-                    queryFound = true;
-                    break;
-                }
-            }
-            if (!queryFound) {
-                match = false;
-            }
-        }
 
-        // Mostrar/ocultar la fila según el resultado
+        qDebug() << "Fila:" << row << "Protocolo:" << protocol;
+        // Mostrar u ocultar la fila en base al resultado del filtro
         packetTable->setRowHidden(row, !match);
     }
 }
+
 
 void snifferWindow::processSqlQuery(const QString &query) {
     // Simulación de ejecución de consulta
@@ -140,7 +130,7 @@ void snifferWindow::processSqlQuery(const QString &query) {
         QString filterValue = query.split("WHERE", Qt::SkipEmptyParts).last().trimmed();
 
         // Aplicar el filtro como ejemplo
-        applyTrafficFilter(filterValue, "Todos");
+        applyTrafficFilter("Todos");
     }
 }
 
