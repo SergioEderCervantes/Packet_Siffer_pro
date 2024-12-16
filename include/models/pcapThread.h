@@ -21,6 +21,7 @@ protected:
 
 signals:
     void packetCaptured(const QStringList &packedData);
+    void sendPacketToDB(const QStringList &packedData, const QByteArray &rawData);
     void finished();
 private:
     char* choosenDevName;

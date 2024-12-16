@@ -243,8 +243,14 @@ void PcapThread::packetHandler(u_char *user, const struct pcap_pkthdr *pkthdr, c
 
 
 
-    // Emitir la señal para agregar el paquete a la GUI
+    // Emitir la señal S agregar el paquete a la GUI
 
     emit packetCaptured(packetData);
+
+    // Añadir el raw y mandarlo a guardar a la BD
+
+    QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+
+    emit sendPacketToDB(packetData, rawPacket);
 }
 

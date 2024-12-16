@@ -47,6 +47,7 @@ target_include_directories(sqlite PUBLIC extern/sqlite)
 set(PROJECT_SOURCES
     src/main.cpp
     src/models/pcapThread.cpp
+    src/models/SQLiteThread.cpp
     src/views/snifferWindow.cpp
     src/views/deviceSelectionWindow.cpp
     src/models/deviceModel.cpp
