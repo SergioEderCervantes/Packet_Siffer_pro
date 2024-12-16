@@ -99,39 +99,7 @@ snifferWindow::snifferWindow(QWidget *parent)
 
 snifferWindow::~snifferWindow() {}
 
-void snifferWindow::applyTrafficFilter(const QString &query, const QString &filterType) {
-    // Mostrar en consola el filtro aplicado
-    qDebug() << "Filtrando con query:" << query << "y tipo de tráfico:" << filterType;
 
-    // Iterar sobre las filas de la tabla
-    for (int row = 0; row < packetTable->rowCount(); ++row) {
-        bool match = true;
-
-        // Verificar el tipo de tráfico (columna "Protocolo", índice 5)
-        QString protocol = packetTable->item(row, 5)->text();
-        if (filterType != "Todos" && protocol != filterType) {
-            match = false;
-        }
-
-        // Verificar si el texto de búsqueda está presente
-        if (!query.isEmpty()) {
-            bool queryFound = false;
-            for (int col = 0; col < packetTable->columnCount(); ++col) {
-                if (packetTable->item(row, col) &&
-                    packetTable->item(row, col)->text().contains(query, Qt::CaseInsensitive)) {
-                    queryFound = true;
-                    break;
-                }
-            }
-            if (!queryFound) {
-                match = false;
-            }
-        }
-
-        // Mostrar/ocultar la fila según el resultado
-        packetTable->setRowHidden(row, !match);
-    }
-}
 
 void snifferWindow::processSqlQuery(const QString &query) {
     // Simulación de ejecución de consulta
@@ -142,7 +110,6 @@ void snifferWindow::processSqlQuery(const QString &query) {
         QString filterValue = query.split("WHERE", Qt::SkipEmptyParts).last().trimmed();
 
         // Aplicar el filtro como ejemplo
-        applyTrafficFilter(filterValue, "Todos");
     }
 }
 
@@ -150,9 +117,16 @@ void snifferWindow::addPacketToTable(const QStringList &packetData) {
     int row = packetTable->rowCount();
     packetTable->insertRow(row);
     for (int col = 0; col < packetData.size(); ++col) {
+
         packetTable->setItem(row, col, new QTableWidgetItem(packetData[col]));
     }
 }
+void snifferWindow::clearPacketTable() {
+    packetTable->clearContents(); // Limpia los datos de las celdas
+    packetTable->setRowCount(0);  // Borra todas las filas
+    qDebug() << "Tabla de paquetes limpiada.";
+}
+
 
 
 void snifferWindow::onRowSelected(){

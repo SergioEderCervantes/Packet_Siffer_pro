@@ -1,5 +1,6 @@
 #include "controllers/deviceController.h"
 #include <QDebug>
+#include "views/mainViewManager.h"
 #include "models/pcapThread.h"
 #include "models/SQLiteThread.h"
 DeviceController::DeviceController(DeviceModel *model, DeviceSelectionWindow *view, mainViewManager *MVM, QObject *parent)
@@ -11,8 +12,8 @@ void DeviceController::handleStartCapture(const QString &devName){
     qDebug() << "Iniciando Captura en: " << devName.toStdString();
     //Sacar el sniffer Window
     snifferWindow *target = this->MVM->getSnifferWindow();
-    //Inicializar el Hilo de la captura de PCAP
-    PcapThread *pcapThread = new PcapThread(devName.toUtf8().data(), this);
+    //Inicializar el Hilo de la captura de
+    PcapThread *pcapThread = new PcapThread(devName.toUtf8().data(), this->MVM->getFilterType(), this);
     // Inicializar el Hilo de la base de datos
     SQLiteThread *sqliteThread = new SQLiteThread(devName, this); // TODO: Cambiar esto dinamicamente
 
@@ -24,6 +25,15 @@ void DeviceController::handleStartCapture(const QString &devName){
     connect(sqliteThread, &SQLiteThread::rowDataResponse, target, &snifferWindow::onRowDataResponse);
     connect(sqliteThread, &SQLiteThread::finished, sqliteThread, &SQLiteThread::deleteLater);
 
+
+    //Conexion hilo killer
+    connect(this->MVM, &mainViewManager::killThread, pcapThread, &PcapThread::handlerKiller);
+    connect(this->MVM, &mainViewManager::clear,target, &snifferWindow::clearPacketTable);
+    connect(pcapThread, &PcapThread::finished, this, [=]() {
+        qDebug() << "Hilo terminado correctamente.";
+        pcapThread->deleteLater();
+
+    });
 
     //Iniciar los hilos
     pcapThread->start();
