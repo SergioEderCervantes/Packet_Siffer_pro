@@ -29,6 +29,9 @@ elseif(UNIX)
     set(PCAP_LIBS ${PCAP_LIBRARIES})
 endif()
 
+# Subsystem para eliminar la terminal
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-subsystem,windows")
+
 # Necesitas encontrar y añadir las librerías de Qt
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets LinguistTools)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets LinguistTools)
@@ -74,11 +77,13 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         ${PROJECT_HEADERS}
+        app_icon_res.o
     )
 else()
     add_executable(Packet_sniffer_pro
         ${PROJECT_SOURCES}
         ${PROJECT_HEADERS}
+        app_icon_res.o
     )
 endif()
 
