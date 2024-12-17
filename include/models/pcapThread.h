@@ -16,7 +16,7 @@ class PcapThread : public QThread
 {
     Q_OBJECT
 public:
-    explicit PcapThread(char* name, QString filter, QObject *parent = nullptr);
+    explicit PcapThread(char* name, QString filter, int index, QObject *parent = nullptr);
     ~PcapThread();
     void run() override;
 
@@ -41,7 +41,7 @@ private:
     pcap_t *capdev;       // Descriptor de captura
     bool stopRequested;   // Bandera para detener el hilo
     bool cont;
-
+    int indexFilter;
 };
 
 #endif // PCAPTHREAD_H

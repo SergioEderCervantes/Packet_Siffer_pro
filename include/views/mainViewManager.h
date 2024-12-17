@@ -17,11 +17,13 @@ public:
     snifferWindow* getSnifferWindow();
     void setCurrentView(QWidget *view);
     QString getFilterType();
+    int getIndexFilter();
 private:
     //Contenedor principal
     QStackedWidget *mainContainer;
     QComboBox *filterType;
-
+    QLineEdit *searchBox;
+    QPushButton *searchButton;
     //Vistas agregadas
     DeviceSelectionWindow *devSelectionWind;
     snifferWindow *captureWind;

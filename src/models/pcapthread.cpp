@@ -83,11 +83,12 @@ struct udphdr
 #endif
 
 
-PcapThread::PcapThread(char* name, QString filter, QObject *parent)
+PcapThread::PcapThread(char* name, QString filter, int index, QObject *parent)
     : QThread(parent), capdev(nullptr), stopRequested(false), cont(true)
 {
     choosenDevName = strdup(name);  // Copiar el nombre del dispositivo
     this->filterType = filter;
+    this->indexFilter = index;
 }
 PcapThread::~PcapThread() {
     free(choosenDevName); // Liberar memoria asignada
@@ -228,28 +229,109 @@ void PcapThread::packetHandler(u_char *user, const struct pcap_pkthdr *pkthdr, c
     packetData << icmpType;  // ICMPType (ejemplo)
     packetData << icmpTypeCode;  // ICMPTypeCode (ejemplo)
 
-    QString protocol = packetData.at(5);
+    QString protocol;
     // Emitir la señal para agregar el paquete a la GUI
     if(!cont){
-        if(this->filterType=="Todos"){
-            emit packetCaptured(packetData);
 
-            // Añadir el raw y mandarlo a guardar a la BD
-
-            QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
-
-            emit sendPacketToDB(packetData, rawPacket);
-        }
-        else{
-            if(this->filterType==protocol){
+        switch (this->indexFilter) {
+        case 0:
+            if (!filterType.isEmpty()) {
+                protocol  = packetData.at(0);
+                if(filterType==protocol){
+                    emit packetCaptured(packetData);
+                    QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                    emit sendPacketToDB(packetData, rawPacket);
+                }
+            } else {
                 emit packetCaptured(packetData);
-                // Añadir el raw y mandarlo a guardar a la BD
-
                 QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
-
                 emit sendPacketToDB(packetData, rawPacket);
             }
+            break;
+
+        case 1:
+            if (!filterType.isEmpty()) {
+                protocol  = packetData.at(1);
+                if(filterType==protocol){
+                    emit packetCaptured(packetData);
+                    QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                    emit sendPacketToDB(packetData, rawPacket);
+                }
+            } else {
+                emit packetCaptured(packetData);
+                QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                emit sendPacketToDB(packetData, rawPacket);
+            }
+            break;
+
+        case 2:
+            if (!filterType.isEmpty()) {
+                protocol  = packetData.at(2);
+                if(filterType==protocol){
+                    emit packetCaptured(packetData);
+                    QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                    emit sendPacketToDB(packetData, rawPacket);
+                }
+            } else {
+                emit packetCaptured(packetData);
+                QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                emit sendPacketToDB(packetData, rawPacket);
+            }
+            break;
+
+        case 3:
+            if (!filterType.isEmpty()) {
+                protocol  = packetData.at(3);
+                if(filterType==protocol){
+                    emit packetCaptured(packetData);
+                    QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                    emit sendPacketToDB(packetData, rawPacket);
+                }
+            } else {
+                emit packetCaptured(packetData);
+                QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                emit sendPacketToDB(packetData, rawPacket);
+            }
+            break;
+
+        case 4:
+            if (!filterType.isEmpty()) {
+                protocol  = packetData.at(4);
+                if(filterType==protocol){
+                    emit packetCaptured(packetData);
+                    QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                    emit sendPacketToDB(packetData, rawPacket);
+                }
+            } else {
+                emit packetCaptured(packetData);
+                QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                emit sendPacketToDB(packetData, rawPacket);
+            }
+            break;
+
+        case 5:
+            if (!filterType.isEmpty()) {
+                protocol  = packetData.at(5);
+                if(filterType==protocol){
+                    emit packetCaptured(packetData);
+                    QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                    emit sendPacketToDB(packetData, rawPacket);
+                }
+            } else {
+                emit packetCaptured(packetData);
+                QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                emit sendPacketToDB(packetData, rawPacket);
+            }
+            break;
+
+        case 6:
+            emit packetCaptured(packetData);
+            QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+            emit sendPacketToDB(packetData, rawPacket);
+
+            break;
         }
+
     }
     else {
         qDebug("Bandera");
