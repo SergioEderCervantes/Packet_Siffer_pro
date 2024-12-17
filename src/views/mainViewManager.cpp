@@ -79,6 +79,20 @@ void mainViewManager::setupToolBar() {
     this->searchBox = new QLineEdit(this);
     searchBox->setPlaceholderText("Buscar...");
     searchBox->setFixedHeight(30);
+    searchBox->setStyleSheet(
+        "QLineEdit {"
+        "    border: 1px solid rgb(74, 13, 82);"
+        "    border-radius: 4px;"
+        "    padding: 5px;"
+        "}"
+        "QLineEdit::placeholder {"
+        "    color: rgb(114, 22, 126);"          // Color gris claro
+        "    font-style: italic;"      // Texto en cursiva
+        "}"
+        "QLineEdit:focus {"
+        "    border: 1px solid rgb(143, 27, 156);"  // Cambiar borde al enfocar
+        "}"
+        );
     // this->searchButton = new QPushButton("Buscar", this);
 
     // Añadir el campo de búsqueda y el botón a la barra de herramientas
@@ -104,7 +118,7 @@ void mainViewManager::setupToolBar() {
     filterType->addItems({"PacketId", "SrcIP", "DstIP", "TOS", "TTL","Protocolo","None"});
     filterType->setEnabled(true); // Habilitar por defecto
     filterType->setCurrentIndex(6);
-    filterType->setFixedHeight(30);
+    filterType->setFixedHeight(31);
     toolbar->addWidget(filterType);
 
     // Detectar cambio de pestañas para habilitar/deshabilitar el filtro
@@ -125,7 +139,27 @@ void mainViewManager::setupToolBar() {
         this->handleExitFromCapture(nullptr);
     });
     toolbar->addAction(exitCaptureAction);
-
+    toolbar->setStyleSheet(
+        "QToolButton {"
+        "    background-color: rgb(115, 17, 127); /* Morado principal */"
+        "    color: white;"
+        "    border-radius: 6px;"
+        "    padding: 5px 10px;"
+        "    font-weight: bold;"
+        "    border: 1px solid rgb(96, 18, 105);" /* Borde morado oscuro */
+        "}"
+        "QToolButton:hover {"
+        "    background-color: rgb(143, 27, 156); /* Morado más claro al hacer hover */"
+        "}"
+        "QToolButton:pressed {"
+        "    background-color: rgb(96, 18, 105); /* Morado oscuro al presionar */"
+        "    color: #ddd;"
+        "}"
+        "QToolButton:disabled {"
+        "    background-color: #cccccc;" /* Gris cuando está deshabilitado */
+        "    color: #888888;"
+        "}"
+        );
     // Evento cuando cierra la aplicación
     connect(this, &mainViewManager::requestExit, this, &mainViewManager::handleExitFromCapture);
 }

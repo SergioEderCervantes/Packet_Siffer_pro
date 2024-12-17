@@ -40,14 +40,14 @@ DeviceSelectionWindow::DeviceSelectionWindow(DeviceModel *model, QWidget *parent
     // Establecer estilo compartido
     this->setStyleSheet(R"(
     QPushButton#styledButton {
-        background-color: #7e0b99;
+        background-color: rgb(115, 17, 127);
         color: white;
         border-radius: 5px;
         padding: 5px 10px;
         border: 1px solid #6b0a86;
     }
     QPushButton#styledButton:hover {
-        background-color: #9a22b3;
+        background-color: rgb(143, 27, 156);
         border: 1px solid #7e0b99;
     }
     QPushButton#styledButton:pressed {
