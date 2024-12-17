@@ -5,6 +5,7 @@
 #include "models/deviceModel.h"
 #include "views/DeviceSelectionWindow.h"
 #include "views/mainViewManager.h"
+
 class DeviceController : public QObject {
     Q_OBJECT
 
@@ -19,6 +20,5 @@ private:
     DeviceSelectionWindow *view;
     mainViewManager *MVM;
 };
-
 
 #endif // DEVICECONTROLLER_H

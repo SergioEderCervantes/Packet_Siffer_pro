@@ -22,6 +22,8 @@ public:
 
 public slots:
     void handlerKiller(); // Slot para detener el hilo
+    void stop();
+    void resume();
 
 signals:
     void packetCaptured(const QStringList &packedData); // Señal para enviar paquetes capturados
@@ -38,6 +40,8 @@ private:
     QString filterType;   // Tipo de filtro
     pcap_t *capdev;       // Descriptor de captura
     bool stopRequested;   // Bandera para detener el hilo
+    bool cont;
+
 };
 
 #endif // PCAPTHREAD_H

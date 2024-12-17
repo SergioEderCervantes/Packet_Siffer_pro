@@ -1,53 +1,59 @@
 #include "controllers/deviceController.h"
 #include <QDebug>
-#include "views/mainViewManager.h"
 #include "models/pcapThread.h"
 #include "models/SQLiteThread.h"
+
 DeviceController::DeviceController(DeviceModel *model, DeviceSelectionWindow *view, mainViewManager *MVM, QObject *parent)
-    :QObject(parent), model(model), view(view), MVM(MVM){
-    connect(view,&DeviceSelectionWindow::startCapture,this,&DeviceController::handleStartCapture);
-    connect(view, &DeviceSelectionWindow::openQueryView,this,&DeviceController::handleOpenQueryView);
+    : QObject(parent), model(model), view(view), MVM(MVM) {
+    connect(view, &DeviceSelectionWindow::startCapture, this, &DeviceController::handleStartCapture);
+    connect(view, &DeviceSelectionWindow::openQueryView, this, &DeviceController::handleOpenQueryView);
 }
 
-void DeviceController::handleStartCapture(const QString &devName){
-    qDebug() << "Iniciando Captura en: " << devName.toStdString();
-    //Sacar el sniffer Window
-    snifferWindow *target = this->MVM->getSnifferWindow();
-    //Inicializar el Hilo de la captura de
-    PcapThread *pcapThread = new PcapThread(devName.toUtf8().data(), this->MVM->getFilterType(), this);
-    // Inicializar el Hilo de la base de datos
-    SQLiteThread *sqliteThread = new SQLiteThread(devName, this); // TODO: Cambiar esto dinamicamente
+void DeviceController::handleStartCapture(const QString &devName) {
+    qDebug() << "Iniciando captura en dispositivo:" << devName;
 
-    // Conectar las se;ales
+    // Obtener la ventana de captura
+    snifferWindow *target = this->MVM->getSnifferWindow();
+
+    // Crear el hilo de captura
+    PcapThread *pcapThread = new PcapThread(devName.toUtf8().data(), this->MVM->getFilterType(), this);
+
+    // Crear el hilo de SQLite
+    SQLiteThread *sqliteThread = new SQLiteThread(devName, this);
+
+    // Pasar el hilo PcapThread al snifferWindow (para manejar pausa/reanudación)
+
+    // Conectar señales del hilo PcapThread
     connect(pcapThread, &PcapThread::packetCaptured, target, &snifferWindow::addPacketToTable);
-    connect(pcapThread, &PcapThread::sendPacketToDB,sqliteThread, &SQLiteThread::savePacket);
+    connect(pcapThread, &PcapThread::sendPacketToDB, sqliteThread, &SQLiteThread::savePacket);
+
+    // Conectar SQLite para manejar consultas
     connect(target, &snifferWindow::fetchRowData, sqliteThread, &SQLiteThread::onFetchRowData);
     connect(sqliteThread, &SQLiteThread::rowDataResponse, target, &snifferWindow::onRowDataResponse);
-    connect(sqliteThread, &SQLiteThread::finished, sqliteThread, &SQLiteThread::deleteLater);
-    connect(this->MVM, &mainViewManager::deleteTable, sqliteThread, &SQLiteThread::onDeleteTable);
     connect(target, &snifferWindow::exec_query, sqliteThread, &SQLiteThread::onExec_query);
 
-    //Conexion hilo killer
-    connect(this->MVM, &mainViewManager::killThread, pcapThread, &PcapThread::handlerKiller);
-    connect(this->MVM, &mainViewManager::clear,target, &snifferWindow::clearPacketTableAndOthers);
+    // Conectar señales de finalización para limpiar recursos
     connect(pcapThread, &PcapThread::finished, this, [=]() {
-        qDebug() << "Hilo terminado correctamente.";
+        qDebug() << "Hilo de captura finalizado.";
         pcapThread->deleteLater();
-
     });
-    connect(this->MVM, &mainViewManager::killThread, sqliteThread, &SQLiteThread::handleKiller);
-    connect(sqliteThread, &SQLiteThread::finished,this, [=] () {
-        qDebug("Hilo de la BD terminado correctamente");
+    connect(sqliteThread, &SQLiteThread::finished, this, [=]() {
+        qDebug() << "Hilo de base de datos finalizado.";
         sqliteThread->deleteLater();
     });
 
-    //Iniciar los hilos
+    // Conectar señales de `mainViewManager` para detener los hilos
+    connect(this->MVM, &mainViewManager::killThread, pcapThread, &PcapThread::handlerKiller);
+    connect(this->MVM, &mainViewManager::killThread, sqliteThread, &SQLiteThread::handleKiller);
+    connect(this->MVM, &mainViewManager::clear, target, &snifferWindow::clearPacketTableAndOthers);
+    connect(target, &snifferWindow::pauseAction, pcapThread, &PcapThread::stop);
+    connect(target, &snifferWindow::resumeAction, pcapThread, &PcapThread::resume);
+    // Iniciar los hilos
     pcapThread->start();
     sqliteThread->start();
 
     //Cambiar de vista
     this->MVM->setCurrentView(target);
-
 }
 void DeviceController::handleOpenQueryView(){
     queryViewWindow *target = this->MVM->getQueryViewWindow();

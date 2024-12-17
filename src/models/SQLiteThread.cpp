@@ -41,6 +41,7 @@ void SQLiteThread::run(){
     // HILO ESPECIAL PARA MANEJAR LA CAPTURA Y CONSULTA DE PAQUETES ENTRANTES EN LA VISTA DE CAPTURA,
     // ESTE HILO NO ESTA DISEÑADO PARA SER USADO EN LA VISTA DE CONSULTAS
     //Abrir la base de datos
+    qDebug("Holalalala");
     int rc = sqlite3_open(DATABASE_NAME.c_str(),&db);
     if (rc != SQLITE_OK){
         qDebug() << "No se pudo abrir la base de datos: " << sqlite3_errmsg(db);
@@ -73,63 +74,70 @@ void SQLiteThread::run(){
     exec();
 }
 
-void SQLiteThread::savePacket(const QStringList &packedData, const QByteArray &rawData){
-    if (!db) {
-        qDebug() << "La base de datos no está inicializada.";
-        return;
+QString buildDebugQuery(const QString &query, const QStringList &values, const QByteArray &blobData) {
+    QString debugQuery = query;
+    int placeholderIndex = debugQuery.indexOf('?'); // Buscar la primera posición del placeholder
+
+    // Reemplazar secuencialmente cada "?"
+    for (const QString &value : values) {
+        QString replacement = value.isEmpty() ? "NULL" : QString("'%1'").arg(value);
+        if (placeholderIndex != -1) {
+            debugQuery.replace(placeholderIndex, 1, replacement);
+            placeholderIndex = debugQuery.indexOf('?', placeholderIndex + replacement.size());
+        }
     }
 
-    // Iniciar una transacción para mejorar el rendimiento
-    char *errMsg = nullptr;
-    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, &errMsg);
-
-    if (errMsg) {
-        qDebug() << "Error al iniciar la transacción: " << errMsg;
-        sqlite3_free(errMsg);
-        return;
+    // Reemplazar el último "?" con la información del blob
+    if (placeholderIndex != -1) {
+        QString blobReplacement = QString("'[BLOB %1 bytes]'").arg(blobData.size());
+        debugQuery.replace(placeholderIndex, 1, blobReplacement);
     }
+
+    return debugQuery;
+}
+
+void SQLiteThread::savePacket(const QStringList &packedData, const QByteArray &rawData) {
+    if (!db) return;
 
     QStringList columns = {"PacketId", "SrcIP", "DstIP", "TOS", "TTL", "Protocolo", "Flags", "SrcPort",
                            "DstPort", "ICMPType", "ICMPTypeCode", "Raw"};
 
+
+    // Preparar la Query
     QString insertQuery = QString("INSERT INTO %1 (%2) VALUES (").arg(tableName).arg(columns.join(", "));
+
+    // Crea el espacio para los values de packedData
     for (int i = 0; i < packedData.size(); ++i) {
         insertQuery += (i == 0 ? "?" : ", ?");
     }
+    // Crea el espacio para el value de raw y cierra la query
     insertQuery += ", ?);";
-
+    // Crear el Statement
     sqlite3_stmt *stmt;
-    int rc = sqlite3_prepare_v2(db, insertQuery.toUtf8().data(), -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        qDebug() << "Error al preparar el statement: " << sqlite3_errmsg(db);
-        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+    int rc = sqlite3_prepare_v2(db,insertQuery.toUtf8().data(), -1, &stmt, nullptr);
+    if (rc != SQLITE_OK){
+        qDebug() << "ERROR AL PREPARAR EL STMT: " << sqlite3_errmsg(db);
         return;
     }
 
-    // Vincular valores
+    // Vincular cada elemento del QStringList al statement
     for (int i = 0; i < packedData.size(); ++i) {
-        sqlite3_bind_text(stmt, i + 1, packedData[i].toUtf8().data(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, i + 1, packedData[i].toUtf8().data(), -1, SQLITE_TRANSIENT);
     }
-    sqlite3_bind_blob(stmt, packedData.size() + 1, rawData.data(), rawData.size(), SQLITE_STATIC);
+
+    // Vincula el raw
+    sqlite3_bind_blob(stmt,packedData.size() + 1, rawData.data(), rawData.size(),SQLITE_TRANSIENT);
 
     // Ejecutar la consulta
     rc = sqlite3_step(stmt);
-    if (rc != SQLITE_DONE) {
-        qDebug() << "Error al ejecutar la consulta: " << sqlite3_errmsg(db);
-        sqlite3_finalize(stmt);
-        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+    if (rc != SQLITE_DONE){
+        qDebug() << "ERROR AL EJECUTAR LA CONSULTA: " << sqlite3_errmsg(db);
         return;
     }
 
-    // Finalizar el statement
+    // Finalizar el Statement
     sqlite3_finalize(stmt);
 
-    // Finalizar la transacción
-    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, &errMsg);
-    if (errMsg) {
-        qDebug() << "Error al finalizar la transacción: " << errMsg;
-        sqlite3_free(errMsg);
-    }
 }
 
 

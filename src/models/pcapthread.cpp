@@ -84,7 +84,7 @@ struct udphdr
 
 
 PcapThread::PcapThread(char* name, QString filter, QObject *parent)
-    : QThread(parent), capdev(nullptr), stopRequested(false)
+    : QThread(parent), capdev(nullptr), stopRequested(false), cont(false)
 {
     choosenDevName = strdup(name);  // Copiar el nombre del dispositivo
     this->filterType = filter;
@@ -98,27 +98,28 @@ PcapThread::~PcapThread() {
 void PcapThread::run() {
     qDebug() << "Capturando en dispositivo:" << choosenDevName;
 
-    char errbuf[PCAP_ERRBUF_SIZE];
-    capdev = pcap_open_live(this->choosenDevName, BUFSIZ, 0, 1000, errbuf);
+        char errbuf[PCAP_ERRBUF_SIZE];
+        capdev = pcap_open_live(this->choosenDevName, BUFSIZ, 0, 1000, errbuf);
 
-    if (!capdev) {
-        qDebug() << "Error al abrir dispositivo:" << errbuf;
-        emit finished();
-        return;
-    }
-
-    // Bucle principal de captura
-    stopRequested = false;
-    if (pcap_loop(capdev, 0, PcapThread::staticPacketHandler, reinterpret_cast<u_char *>(this)) < 0) {
-        if (!stopRequested) {
-            qDebug() << "Error en pcap_loop";
+        if (!capdev) {
+            qDebug() << "Error al abrir dispositivo:" << errbuf;
+            emit finished();
+            return;
         }
-    }
 
-    pcap_close(capdev);
-    capdev = nullptr;
-    qDebug() << "Captura finalizada.";
-    emit finished();
+        // Bucle principal de captura
+        stopRequested = false;
+        if (pcap_loop(capdev, 0, PcapThread::staticPacketHandler, reinterpret_cast<u_char *>(this)) < 0) {
+            if (!stopRequested) {
+                qDebug() << "Error en pcap_loop";
+            }
+        }
+
+        pcap_close(capdev);
+        capdev = nullptr;
+        qDebug() << "Captura finalizada.";
+        emit finished();
+
 }
 
 
@@ -229,28 +230,36 @@ void PcapThread::packetHandler(u_char *user, const struct pcap_pkthdr *pkthdr, c
 
     QString protocol = packetData.at(5);
     // Emitir la señal para agregar el paquete a la GUI
-    if(this->filterType=="Todos"){
-        emit packetCaptured(packetData);
-        
-        // Añadir el raw y mandarlo a guardar a la BD
-
-        QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
-
-        emit sendPacketToDB(packetData, rawPacket);
-    }
-    else{
-        if(this->filterType==protocol){
+    if(!cont){
+        if(this->filterType=="Todos"){
             emit packetCaptured(packetData);
+
             // Añadir el raw y mandarlo a guardar a la BD
 
             QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
 
             emit sendPacketToDB(packetData, rawPacket);
         }
+        else{
+            if(this->filterType==protocol){
+                emit packetCaptured(packetData);
+                // Añadir el raw y mandarlo a guardar a la BD
+
+                QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+
+                emit sendPacketToDB(packetData, rawPacket);
+            }
+        }
     }
 
 }
-
+void PcapThread::stop() {
+    qDebug("fffffff");
+    cont = true;  // Cambia el valor de la variable booleana
+}
+void PcapThread::resume(){
+    cont=false;
+}
 void PcapThread::handlerKiller() {
     qDebug() << "Deteniendo captura...";
     stopRequested = true;
