@@ -6,7 +6,7 @@
 #include <QInputDialog>
 #include <QFileDialog>
 #include <QMessageBox>
-
+#include <sqlite3.h>
 DeviceSelectionWindow::DeviceSelectionWindow(DeviceModel *model, QWidget *parent)
     : QWidget(parent) {
 
@@ -85,7 +85,6 @@ DeviceSelectionWindow::DeviceSelectionWindow(DeviceModel *model, QWidget *parent
     // Crear menú contextual
     tableContextMenu = new QMenu(this);
     tableContextMenu->addAction("Borrar Tabla", this, &DeviceSelectionWindow::onDeleteTable);
-    tableContextMenu->addAction("Renombrar Tabla", this, &DeviceSelectionWindow::onRenameTable);
     tableContextMenu->addAction("Exportar a Excel", this, &DeviceSelectionWindow::onExportTableToExcel);
 
     tableListView->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -141,15 +140,21 @@ void DeviceSelectionWindow::onTableMenuRequested(const QPoint &pos) {
 
 void DeviceSelectionWindow::onDeleteTable() {
     qDebug() << "Borrar tabla:" << selectedTableName;
-}
-
-void DeviceSelectionWindow::onRenameTable() {
-    bool ok;
-    QString newName = QInputDialog::getText(this, "Renombrar Tabla", "Nuevo nombre:", QLineEdit::Normal, selectedTableName, &ok);
-    if (ok && !newName.isEmpty()) {
-        qDebug() << "Renombrar tabla a:" << newName;
+    sqlite3 *db;
+    int rc = sqlite3_open("network_sniffer.db",&db);
+    if (rc != SQLITE_OK){
+        qDebug() << "No se pudo abrir la base de datos: " << sqlite3_errmsg(db);
+        return;
+    }
+    QString query = QString("DROP TABLE IF EXISTS %1;").arg(selectedTableName);
+    rc = sqlite3_exec(db,query.toUtf8().data(),nullptr, nullptr, nullptr);
+    if (rc != SQLITE_OK){
+        qDebug() << "Error al borrar la tabla de la base de datos: " << sqlite3_errmsg(db);
+    } else{
+        qDebug() << "La tabla fue borrada con exito";
     }
 }
+
 
 void DeviceSelectionWindow::onExportTableToExcel() {
     // Obtener la ruta para guardar el archivo CSV

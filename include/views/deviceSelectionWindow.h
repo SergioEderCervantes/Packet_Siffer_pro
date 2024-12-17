@@ -19,7 +19,6 @@ signals:
     void startCapture(const QString &devName);
     void openQueryView();
     void deleteTable(const QString &tableName);
-    void renameTable(const QString &tableName);
     void exportTableToExcel(const QString &tableName);
     void createCSV(const QString &filePath, const QString &selectedTableName);
 
@@ -31,7 +30,6 @@ private slots:
     void onOpenQueryView();
     void onTableMenuRequested(const QPoint &pos); // Menú contextual
     void onDeleteTable();
-    void onRenameTable();
     void onExportTableToExcel();
 
 private:
