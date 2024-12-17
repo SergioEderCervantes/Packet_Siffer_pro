@@ -11,9 +11,8 @@ queryViewWindow::queryViewWindow(queryModel *model, QWidget *parent)
     // ----------------------
     sidebarListView = new QListView(this);
 
-    sidebarListView->setStyleSheet("QListView { background-color: #2E2E2E; color: white; font-size: 16px; }"
-                                   "QListView::item { padding: 8px; }"
-                                   "QListView::item:selected { background-color: #4A4A4A; }");
+    sidebarListView->setStyleSheet("QListView { background-color: #2E2E2E; color: white; font-size: 14px; }"
+                                   "QListView::item { padding: 6px; }");
 
     // ----------------------
     // Query Area (TextEdit + Button)

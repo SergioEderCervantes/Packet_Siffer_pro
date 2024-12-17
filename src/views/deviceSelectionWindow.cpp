@@ -28,12 +28,37 @@ DeviceSelectionWindow::DeviceSelectionWindow(DeviceModel *model, QWidget *parent
     startCaptureBtn->setEnabled(false);
     openQueryViewBtn->setEnabled(true);
 
-    startCaptureBtn->setFixedHeight(50);
-    openQueryViewBtn->setFixedHeight(50);
+    startCaptureBtn->setFixedHeight(40);
+    openQueryViewBtn->setFixedHeight(40);
+
+    // Estilizar Botones
+
+    // Asignar nombres de objeto únicos
+    startCaptureBtn->setObjectName("styledButton");
+    openQueryViewBtn->setObjectName("styledButton");
+
+    // Establecer estilo compartido
+    this->setStyleSheet(R"(
+    QPushButton#styledButton {
+        background-color: #7e0b99;
+        color: white;
+        border-radius: 5px;
+        padding: 5px 10px;
+        border: 1px solid #6b0a86;
+    }
+    QPushButton#styledButton:hover {
+        background-color: #9a22b3;
+        border: 1px solid #7e0b99;
+    }
+    QPushButton#styledButton:pressed {
+        background-color: #5e0873;
+        border: 1px solid #4a0657;
+    }
+)");
 
     // Estilizar QListView
-    QString listStyle = "QListView { font-size: 16px; }"
-                        "QListView::item { padding: 10px; }";
+    QString listStyle = "QListView { font-size: 14px; }"
+                        "QListView::item { padding: 6px; }";
     devListView->setStyleSheet(listStyle);
     tableListView->setStyleSheet(listStyle);
 

@@ -209,6 +209,17 @@ void PcapThread::packetHandler(u_char *user, const struct pcap_pkthdr *pkthdr, c
         icmpTypeCode = QString::number(icmp_type_code);
         break;
     }
+    case IPPROTO_DSTOPTS:
+        proto = "DSTOPTS";
+        break;
+    case 128:
+        proto = "PIM";
+        break;
+    case 141:
+        proto = "WESP";
+        break;
+    case 0:
+        proto = "Undefined";
     default:
         proto = "Desconocido: ";
         proto.append(QString::number(protocol_type));
