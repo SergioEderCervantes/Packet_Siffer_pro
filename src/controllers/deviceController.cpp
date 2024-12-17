@@ -50,5 +50,6 @@ void DeviceController::handleStartCapture(const QString &devName){
 
 }
 void DeviceController::handleOpenQueryView(){
-
+    queryViewWindow *target = this->MVM->getQueryViewWindow();
+    this->MVM->setCurrentView(target);
 }

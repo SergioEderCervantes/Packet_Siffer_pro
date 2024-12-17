@@ -53,6 +53,8 @@ set(PROJECT_SOURCES
     src/models/deviceModel.cpp
     src/controllers/deviceController.cpp
     src/views/mainViewManager.cpp
+    src/views/queryViewWindow.cpp
+    src/models/queryModel.cpp
 )
 
 set(PROJECT_HEADERS
@@ -63,6 +65,8 @@ set(PROJECT_HEADERS
     include/views/snifferWindow.h
     include/views/deviceSelectionWindow.h
     include/views/mainViewManager.h
+    include/views/queryViewWindow.h
+    include/models/queryModel.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

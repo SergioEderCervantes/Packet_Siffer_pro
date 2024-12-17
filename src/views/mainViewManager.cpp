@@ -11,7 +11,7 @@
 #include <QDebug>
 #include "models/deviceModel.h"
 #include "controllers/deviceController.h"
-
+#include "models/queryModel.h"
 mainViewManager::mainViewManager(QWidget *parent)
     : QMainWindow(parent), mainContainer(new QStackedWidget(this)) {
     setupViews();
@@ -31,8 +31,12 @@ void mainViewManager::setupViews() {
     DeviceController *devController = new DeviceController(devModel, devSelectionWind, this);
     this->captureWind = new snifferWindow(this);
 
+    queryModel *querModel = new queryModel(this);
+    this->queryWind = new queryViewWindow(querModel, this);
+
     mainContainer->addWidget(devSelectionWind);
     mainContainer->addWidget(captureWind);
+    mainContainer->addWidget(queryWind);
 }
 
 void mainViewManager::setupMenuBar() {
@@ -106,8 +110,12 @@ void mainViewManager::setupToolBar() {
 snifferWindow* mainViewManager::getSnifferWindow() {
     return this->captureWind;
 }
-QString mainViewManager::getFilterType(){
 
+queryViewWindow* mainViewManager::getQueryViewWindow(){
+    return this->queryWind;
+}
+
+QString mainViewManager::getFilterType(){
     QString filter = filterType->currentText();
 
     return filter;

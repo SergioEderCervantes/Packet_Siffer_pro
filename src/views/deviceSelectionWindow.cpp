@@ -11,8 +11,10 @@ DeviceSelectionWindow::DeviceSelectionWindow(DeviceModel *model, QWidget *parent
     : QWidget(parent) {
 
     // Definición de atributos
-    devLabel = new QLabel("Interfaces disponibles", this);
-    tableLabel = new QLabel("Previas capturas guardadas", this);
+    this->devLabel = new QLabel("Interfaces disponibles", this);
+    this->devLabel->setStyleSheet("QLabel { font-size: 18px; font-weight: bold; color: #333333; }");
+    this->tableLabel = new QLabel("Previas capturas guardadas", this);
+    this->tableLabel->setStyleSheet("QLabel { font-size: 18px; font-weight: bold; color: #333333; }");
 
     this->devListView = new QListView(this);
     this->tableListView = new QListView(this);
