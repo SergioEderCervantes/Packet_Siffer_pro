@@ -84,7 +84,7 @@ struct udphdr
 
 
 PcapThread::PcapThread(char* name, QString filter, int index, QObject *parent)
-    : QThread(parent), capdev(nullptr), stopRequested(false), cont(true)
+    : QThread(parent), capdev(nullptr), stopRequested(false), cont(false)
 {
     choosenDevName = strdup(name);  // Copiar el nombre del dispositivo
     this->filterType = filter;
@@ -323,20 +323,13 @@ void PcapThread::packetHandler(u_char *user, const struct pcap_pkthdr *pkthdr, c
                 emit sendPacketToDB(packetData, rawPacket);
             }
             break;
-
         case 6:
-            emit packetCaptured(packetData);
-            QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
-            emit sendPacketToDB(packetData, rawPacket);
-
+                emit packetCaptured(packetData);
+                QByteArray rawPacket(reinterpret_cast<const char *>(packetd_ptr), pkthdr->len);
+                emit sendPacketToDB(packetData, rawPacket);
             break;
         }
-
     }
-    else {
-        qDebug("Bandera");
-    }
-
 }
 void PcapThread::stop() {
     qDebug("fffffff");

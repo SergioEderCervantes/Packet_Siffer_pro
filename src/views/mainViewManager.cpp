@@ -11,7 +11,7 @@
 #include <QDebug>
 #include "models/deviceModel.h"
 #include "controllers/deviceController.h"
-
+#include "models/queryModel.h"
 mainViewManager::mainViewManager(QWidget *parent)
     : QMainWindow(parent), mainContainer(new QStackedWidget(this)) {
     setupViews();
@@ -31,8 +31,12 @@ void mainViewManager::setupViews() {
     DeviceController *devController = new DeviceController(devModel, devSelectionWind, this);
     this->captureWind = new snifferWindow(this);
 
+    queryModel *querModel = new queryModel(this);
+    this->queryWind = new queryViewWindow(querModel, this);
+
     mainContainer->addWidget(devSelectionWind);
     mainContainer->addWidget(captureWind);
+    mainContainer->addWidget(queryWind);
 }
 
 void mainViewManager::setupMenuBar() {
@@ -56,7 +60,7 @@ void mainViewManager::setupMenuBar() {
 void mainViewManager::setupToolBar() {
     // Crear una barra de herramientas
     QToolBar *toolbar = addToolBar("Barra de herramientas");
-
+    toolbar->setFixedHeight(40);
     // Acciones principales
     // QAction *homeAction = new QAction("Inicio", this);
     // connect(homeAction, &QAction::triggered, [this]() {
@@ -74,7 +78,7 @@ void mainViewManager::setupToolBar() {
     // Reemplazar el spacer por un campo de búsqueda y un botón
     this->searchBox = new QLineEdit(this);
     searchBox->setPlaceholderText("Buscar...");
-
+    searchBox->setFixedHeight(30);
     // this->searchButton = new QPushButton("Buscar", this);
 
     // Añadir el campo de búsqueda y el botón a la barra de herramientas
@@ -100,6 +104,7 @@ void mainViewManager::setupToolBar() {
     filterType->addItems({"PacketId", "SrcIP", "DstIP", "TOS", "TTL","Protocolo","None"});
     filterType->setEnabled(true); // Habilitar por defecto
     filterType->setCurrentIndex(6);
+    filterType->setFixedHeight(30);
     toolbar->addWidget(filterType);
 
     // Detectar cambio de pestañas para habilitar/deshabilitar el filtro
@@ -130,6 +135,11 @@ void mainViewManager::setupToolBar() {
 snifferWindow* mainViewManager::getSnifferWindow() {
     return this->captureWind;
 }
+
+queryViewWindow* mainViewManager::getQueryViewWindow(){
+    return this->queryWind;
+}
+
 QString mainViewManager::getFilterType(){
 
     return searchBox->text();

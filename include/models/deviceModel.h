@@ -16,11 +16,17 @@ class DeviceModel : public QObject
 public:
     explicit DeviceModel(QObject *parent = nullptr);
     QVector<NetworkInterface> getInterfaces() const;
-
+    QVector<QString> getTableNames() const;
 private:
+    static const std::string DATABASE_NAME;
     QVector<NetworkInterface> interfaces;
+    QVector<QString> tableNames;
 
     void fetchInterfaces();
+    void fetchTableNames();
+public slots:
+
+    void onCreateCSV(const QString &filePath, const QString &selectedTableName);
 };
 
 #endif // DEVICEMODEL_H
