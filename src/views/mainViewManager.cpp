@@ -60,51 +60,76 @@ void mainViewManager::setupMenuBar() {
 void mainViewManager::setupToolBar() {
     // Crear una barra de herramientas
     QToolBar *toolbar = addToolBar("Barra de herramientas");
-
+    toolbar->setFixedHeight(40);
     // Acciones principales
-    QAction *homeAction = new QAction("Inicio", this);
-    connect(homeAction, &QAction::triggered, [this]() {
-        mainContainer->setCurrentWidget(devSelectionWind);
-    });
+    // QAction *homeAction = new QAction("Inicio", this);
+    // connect(homeAction, &QAction::triggered, [this]() {
+    //     mainContainer->setCurrentWidget(devSelectionWind);
+    // });
 
-    QAction *captureAction = new QAction("Captura", this);
-    connect(captureAction, &QAction::triggered, [this]() {
-        mainContainer->setCurrentWidget(captureWind);
-    });
+    // QAction *captureAction = new QAction("Captura", this);
+    // connect(captureAction, &QAction::triggered, [this]() {
+    //     mainContainer->setCurrentWidget(captureWind);
+    // });
 
-    toolbar->addAction(homeAction);
-    toolbar->addAction(captureAction);
+    // toolbar->addAction(homeAction);
+    // toolbar->addAction(captureAction);
 
-    // Separador flexible
-    QWidget *spacer = new QWidget(this);
-    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    toolbar->addWidget(spacer);
+    // Reemplazar el spacer por un campo de búsqueda y un botón
+    this->searchBox = new QLineEdit(this);
+    searchBox->setPlaceholderText("Buscar...");
+    searchBox->setFixedHeight(30);
+    // this->searchButton = new QPushButton("Buscar", this);
+
+    // Añadir el campo de búsqueda y el botón a la barra de herramientas
+    toolbar->addWidget(searchBox);
+    // toolbar->addWidget(searchButton);
+
+    // // Conectar el botón de búsqueda
+    // connect(searchButton, &QPushButton::clicked, this, [this]() {
+    //     QString searchText = searchBox->text();
+    //     if (!searchText.isEmpty()) {
+    //         qDebug() << "Buscando:" << searchText;
+
+    //     } else {
+    //         qDebug() << "Campo de búsqueda vacío.";
+    //     }
+    // });
+
+    // Conectar Enter para la búsqueda en el QLineEdit
+    connect(searchBox, &QLineEdit::returnPressed, searchButton, &QPushButton::click);
 
     // Filtro de tráfico
     this->filterType = new QComboBox(this);
-    filterType->addItems({"Todos", "TCP", "UDP", "ICMP"});
-    filterType->setEnabled(true); // Deshabilitar por defecto
+    filterType->addItems({"PacketId", "SrcIP", "DstIP", "TOS", "TTL","Protocolo","None"});
+    filterType->setEnabled(true); // Habilitar por defecto
+    filterType->setCurrentIndex(6);
+    filterType->setFixedHeight(30);
     toolbar->addWidget(filterType);
 
     // Detectar cambio de pestañas para habilitar/deshabilitar el filtro
     connect(mainContainer, &QStackedWidget::currentChanged, this, [this](int index) {
         if (mainContainer->currentWidget() == captureWind) {
             filterType->setEnabled(false);
+            searchBox->setEnabled(false);
         } else {
             filterType->setEnabled(true);
+            searchBox->setEnabled(true);
+
         }
     });
-
 
     // Opción para salir de captura
     QAction *exitCaptureAction = new QAction("Salir de Captura", this);
     connect(exitCaptureAction, &QAction::triggered, this, [this]() {
-        this->handleExitFromCapture(nullptr); // Pasar nullptr al slot
+        this->handleExitFromCapture(nullptr);
     });
     toolbar->addAction(exitCaptureAction);
-    //Evento cuando cierra la aplicacion
+
+    // Evento cuando cierra la aplicación
     connect(this, &mainViewManager::requestExit, this, &mainViewManager::handleExitFromCapture);
 }
+
 
 
 snifferWindow* mainViewManager::getSnifferWindow() {
@@ -116,9 +141,13 @@ queryViewWindow* mainViewManager::getQueryViewWindow(){
 }
 
 QString mainViewManager::getFilterType(){
-    QString filter = filterType->currentText();
 
-    return filter;
+    return searchBox->text();
+
+
+}
+int mainViewManager::getIndexFilter(){
+    return filterType->currentIndex();
 }
 void mainViewManager::setCurrentView(QWidget* view) {
     mainContainer->setCurrentWidget(view);
@@ -185,7 +214,7 @@ void mainViewManager::handleDiscardAndExit() {
 
 void mainViewManager::resetFilters() {
     filterType->setEnabled(true);
-    filterType->setCurrentIndex(0); // Seleccionar "Todos" por defecto
+    filterType->setCurrentIndex(6); // Seleccionar "Todos" por defecto
 }
 
 

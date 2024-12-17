@@ -17,7 +17,7 @@ void DeviceController::handleStartCapture(const QString &devName) {
     snifferWindow *target = this->MVM->getSnifferWindow();
 
     // Crear el hilo de captura
-    PcapThread *pcapThread = new PcapThread(devName.toUtf8().data(), this->MVM->getFilterType(), this);
+    PcapThread *pcapThread = new PcapThread(devName.toUtf8().data(), this->MVM->getFilterType(), this->MVM->getIndexFilter(), this);
 
     // Crear el hilo de SQLite
     SQLiteThread *sqliteThread = new SQLiteThread(devName, this);
