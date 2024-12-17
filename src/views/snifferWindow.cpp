@@ -24,7 +24,22 @@ snifferWindow::snifferWindow(QWidget *parent, PcapThread *thread)
     packetTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     connect(packetTable,&QTableWidget::itemSelectionChanged,this,&snifferWindow::onRowSelected);
-
+    packetTable->setStyleSheet(
+        "QTableWidget::item:hover {"
+        "    background-color: rgb(106, 64, 132); "    // Color al hacer hover
+        "    color: white;"                  // Color del texto al hacer hover
+        "}"
+        "QTableWidget::item:selected {"
+        "    background-color: rgba(160, 31, 178, 0.3); "    // Color al seleccionar
+        "    color: white;"                  // Color del texto al seleccionar
+        "}"
+        "QHeaderView::section {"
+        "    background-color: rgb(65, 39, 81);"     // Color del encabezado
+        "    color: white;"
+        "    padding: 4px;"
+        "    border: 1px solid rgb(65, 39, 81);"
+        "}"
+        );
     // ------------------------------
     // Botón para abrir el panel de consultas
     // ------------------------------
