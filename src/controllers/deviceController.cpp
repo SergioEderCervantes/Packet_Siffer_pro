@@ -6,6 +6,7 @@
 DeviceController::DeviceController(DeviceModel *model, DeviceSelectionWindow *view, mainViewManager *MVM, QObject *parent)
     :QObject(parent), model(model), view(view), MVM(MVM){
     connect(view,&DeviceSelectionWindow::startCapture,this,&DeviceController::handleStartCapture);
+    connect(view, &DeviceSelectionWindow::openQueryView,this,&DeviceController::handleOpenQueryView);
 }
 
 void DeviceController::handleStartCapture(const QString &devName){
@@ -46,5 +47,8 @@ void DeviceController::handleStartCapture(const QString &devName){
 
     //Cambiar de vista
     this->MVM->setCurrentView(target);
+
+}
+void DeviceController::handleOpenQueryView(){
 
 }

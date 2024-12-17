@@ -13,7 +13,7 @@ public:
 
 private slots:
     void handleStartCapture(const QString &deviceName);
-
+    void handleOpenQueryView();
 private:
     DeviceModel *model;
     DeviceSelectionWindow *view;

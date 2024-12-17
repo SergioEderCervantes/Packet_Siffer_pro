@@ -74,60 +74,62 @@ void SQLiteThread::run(){
 }
 
 void SQLiteThread::savePacket(const QStringList &packedData, const QByteArray &rawData){
-    if (!db) return;
+    if (!db) {
+        qDebug() << "La base de datos no está inicializada.";
+        return;
+    }
+
+    // Iniciar una transacción para mejorar el rendimiento
+    char *errMsg = nullptr;
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, &errMsg);
+
+    if (errMsg) {
+        qDebug() << "Error al iniciar la transacción: " << errMsg;
+        sqlite3_free(errMsg);
+        return;
+    }
 
     QStringList columns = {"PacketId", "SrcIP", "DstIP", "TOS", "TTL", "Protocolo", "Flags", "SrcPort",
                            "DstPort", "ICMPType", "ICMPTypeCode", "Raw"};
 
-
-    // Preparar la Query
     QString insertQuery = QString("INSERT INTO %1 (%2) VALUES (").arg(tableName).arg(columns.join(", "));
-
-    // Crea el espacio para los values de packedData
     for (int i = 0; i < packedData.size(); ++i) {
         insertQuery += (i == 0 ? "?" : ", ?");
     }
-    // Crea el espacio para el value de raw y cierra la query
     insertQuery += ", ?);";
-    // Crear el Statement
+
     sqlite3_stmt *stmt;
-    int rc = sqlite3_prepare_v2(db,insertQuery.toUtf8().data(), -1, &stmt, nullptr);
-    if (rc != SQLITE_OK){
-        qDebug() << "ERROR AL PREPARAR EL STMT: " << sqlite3_errmsg(db);
+    int rc = sqlite3_prepare_v2(db, insertQuery.toUtf8().data(), -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        qDebug() << "Error al preparar el statement: " << sqlite3_errmsg(db);
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
         return;
     }
 
-    // Vincular cada elemento del QStringList al statement
+    // Vincular valores
     for (int i = 0; i < packedData.size(); ++i) {
-        sqlite3_bind_text(stmt, i + 1, packedData[i].toUtf8().data(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, i + 1, packedData[i].toUtf8().data(), -1, SQLITE_STATIC);
     }
-
-    // Vincula el raw
-    sqlite3_bind_blob(stmt,packedData.size() + 1, rawData.data(), rawData.size(),SQLITE_TRANSIENT);
+    sqlite3_bind_blob(stmt, packedData.size() + 1, rawData.data(), rawData.size(), SQLITE_STATIC);
 
     // Ejecutar la consulta
     rc = sqlite3_step(stmt);
-    if (rc != SQLITE_DONE){
-        qDebug() << "ERROR AL EJECUTAR LA CONSULTA: " << sqlite3_errmsg(db);
+    if (rc != SQLITE_DONE) {
+        qDebug() << "Error al ejecutar la consulta: " << sqlite3_errmsg(db);
+        sqlite3_finalize(stmt);
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
         return;
     }
 
-    // Finalizar el Statement
+    // Finalizar el statement
     sqlite3_finalize(stmt);
 
-}
-
-
-void SQLiteThread::printStoredData() {
-    QString selectQuery = QString("SELECT * FROM %1;").arg(tableName);
-
-    char *errMsg = nullptr;
-    // int rc = sqlite3_exec(db, selectQuery.toUtf8().data(), callback, nullptr, &errMsg);
-
-    // if (rc != SQLITE_OK) {
-    //     qDebug() << "Error ejecutando SELECT:" << errMsg;
-    //     sqlite3_free(errMsg);
-    // }
+    // Finalizar la transacción
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, &errMsg);
+    if (errMsg) {
+        qDebug() << "Error al finalizar la transacción: " << errMsg;
+        sqlite3_free(errMsg);
+    }
 }
 
 

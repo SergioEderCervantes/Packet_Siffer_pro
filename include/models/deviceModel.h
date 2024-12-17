@@ -16,11 +16,13 @@ class DeviceModel : public QObject
 public:
     explicit DeviceModel(QObject *parent = nullptr);
     QVector<NetworkInterface> getInterfaces() const;
-
+    QVector<QString> getTableNames() const;
 private:
     QVector<NetworkInterface> interfaces;
+    QVector<QString> tableNames;
 
     void fetchInterfaces();
+    void fetchTableNames();
 };
 
 #endif // DEVICEMODEL_H

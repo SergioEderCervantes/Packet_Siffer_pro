@@ -12,7 +12,6 @@ class SQLiteThread : public QThread{
 public:
     explicit SQLiteThread(QString interfaceName, QObject *parent = nullptr);
     ~SQLiteThread();
-    void printStoredData();
 
     void run() override;
 signals:

@@ -1,49 +1,98 @@
 #include "views/deviceSelectionWindow.h"
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
 #include <QDebug>
+#include <QInputDialog>
+#include <QFileDialog>
+#include <QMessageBox>
+
 DeviceSelectionWindow::DeviceSelectionWindow(DeviceModel *model, QWidget *parent)
-    :QWidget(parent){
-    // Definicion de atributos
+    : QWidget(parent) {
+
+    // Definición de atributos
+    devLabel = new QLabel("Interfaces disponibles", this);
+    tableLabel = new QLabel("Previas capturas guardadas", this);
+
     this->devListView = new QListView(this);
+    this->tableListView = new QListView(this);
+
     this->startCaptureBtn = new QPushButton("Iniciar Captura", this);
+    this->openQueryViewBtn = new QPushButton("Open Query View", this);
+
     this->devModel = new QStandardItemModel(this);
+    this->tableModel = new QStandardItemModel(this);
 
     startCaptureBtn->setEnabled(false);
+    openQueryViewBtn->setEnabled(true);
 
-    // Llenar la el devModel con todas las interfaces
-    for (const NetworkInterface &netIf : model->getInterfaces()){
+    startCaptureBtn->setFixedHeight(50);
+    openQueryViewBtn->setFixedHeight(50);
+
+    // Estilizar QListView
+    QString listStyle = "QListView { font-size: 16px; }"
+                        "QListView::item { padding: 10px; }";
+    devListView->setStyleSheet(listStyle);
+    tableListView->setStyleSheet(listStyle);
+
+    // Llenar devModel con interfaces de red
+    for (const NetworkInterface &netIf : model->getInterfaces()) {
         auto *item = new QStandardItem(netIf.description);
-        item->setData(netIf.name,Qt::UserRole);
+        item->setData(netIf.name, Qt::UserRole);
         devModel->appendRow(item);
     }
 
-    // Asociar devModel con la list view
+    // Llenar tableModel con nombres de tablas
+    for (const QString &tableName : model->getTableNames()) {
+        auto *item = new QStandardItem(tableName);
+        item->setData(tableName, Qt::UserRole);
+        tableModel->appendRow(item);
+    }
+
     devListView->setModel(devModel);
+    tableListView->setModel(tableModel);
 
     devListView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tableListView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-    // Conectar las se;ales y los slots
+    // Crear menú contextual
+    tableContextMenu = new QMenu(this);
+    tableContextMenu->addAction("Borrar Tabla", this, &DeviceSelectionWindow::onDeleteTable);
+    tableContextMenu->addAction("Renombrar Tabla", this, &DeviceSelectionWindow::onRenameTable);
+    tableContextMenu->addAction("Exportar a Excel", this, &DeviceSelectionWindow::onExportTableToExcel);
+
+    tableListView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(tableListView, &QListView::customContextMenuRequested, this, &DeviceSelectionWindow::onTableMenuRequested);
+
+    // Conectar botones
     connect(devListView, &QListView::clicked, this, &DeviceSelectionWindow::onDeviceSelected);
     connect(devListView, &QListView::doubleClicked, this, &DeviceSelectionWindow::onDeviceDoubleClicked);
+    connect(tableListView, &QListView::doubleClicked, this, &DeviceSelectionWindow::onTableSelected);
     connect(startCaptureBtn, &QPushButton::clicked, this, &DeviceSelectionWindow::onStartCaptureClicked);
+    connect(openQueryViewBtn, &QPushButton::clicked, this, &DeviceSelectionWindow::onOpenQueryView);
 
-    // Dise;o de la vista
-    auto *layout = new QVBoxLayout;
-    layout->addWidget(devListView);
-    layout->addWidget(startCaptureBtn);
+    // Layout principal
+    auto *mainLayout = new QHBoxLayout;
+    auto *leftLayout = new QVBoxLayout;
+    auto *rightLayout = new QVBoxLayout;
 
-    setLayout(layout);
+    leftLayout->addWidget(devLabel);
+    leftLayout->addWidget(devListView);
+    leftLayout->addWidget(startCaptureBtn);
+
+    rightLayout->addWidget(tableLabel);
+    rightLayout->addWidget(tableListView);
+    rightLayout->addWidget(openQueryViewBtn);
+
+    mainLayout->addLayout(leftLayout);
+    mainLayout->addLayout(rightLayout);
+
+    setLayout(mainLayout);
 }
 
 void DeviceSelectionWindow::onDeviceSelected(const QModelIndex &index) {
-    selectedDevName = index.data(Qt::UserRole).toString();  // Obtener el nombre técnico
-    startCaptureBtn->setEnabled(true);  // Habilitar el botón
-}
-
-void DeviceSelectionWindow::onStartCaptureClicked() {
-    if (!selectedDevName.isEmpty()) {
-        emit startCapture(selectedDevName);  // Emitir la señal
-    }
+    selectedDevName = index.data(Qt::UserRole).toString();
+    startCaptureBtn->setEnabled(true);
 }
 
 void DeviceSelectionWindow::onDeviceDoubleClicked(const QModelIndex &index) {
@@ -51,4 +100,43 @@ void DeviceSelectionWindow::onDeviceDoubleClicked(const QModelIndex &index) {
     emit startCapture(deviceName);  // Emitir la señal directamente
 }
 
-DeviceSelectionWindow::~DeviceSelectionWindow(){}
+void DeviceSelectionWindow::onTableSelected() {
+    emit openQueryView();
+}
+
+void DeviceSelectionWindow::onTableMenuRequested(const QPoint &pos) {
+    QModelIndex index = tableListView->indexAt(pos);
+    if (index.isValid()) {
+        selectedTableName = index.data(Qt::UserRole).toString();
+        tableContextMenu->exec(tableListView->viewport()->mapToGlobal(pos));
+    }
+}
+
+void DeviceSelectionWindow::onDeleteTable() {
+    qDebug() << "Borrar tabla:" << selectedTableName;
+}
+
+void DeviceSelectionWindow::onRenameTable() {
+    bool ok;
+    QString newName = QInputDialog::getText(this, "Renombrar Tabla", "Nuevo nombre:", QLineEdit::Normal, selectedTableName, &ok);
+    if (ok && !newName.isEmpty()) {
+        qDebug() << "Renombrar tabla a:" << newName;
+    }
+}
+
+void DeviceSelectionWindow::onExportTableToExcel() {
+    QString filePath = QFileDialog::getSaveFileName(this, "Exportar a Excel", "", "Archivos Excel (*.xlsx)");
+    if (!filePath.isEmpty()) {
+        qDebug() << "Exportar tabla a:" << filePath;
+    }
+}
+
+void DeviceSelectionWindow::onStartCaptureClicked() {
+    emit startCapture(selectedDevName);
+}
+
+void DeviceSelectionWindow::onOpenQueryView() {
+    emit openQueryView();
+}
+
+DeviceSelectionWindow::~DeviceSelectionWindow() {}
