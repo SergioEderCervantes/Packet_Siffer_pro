@@ -4,11 +4,12 @@
 #include "models/SQLiteThread.h"
 
 DeviceController::DeviceController(DeviceModel *model, DeviceSelectionWindow *view, mainViewManager *MVM, QObject *parent)
-    : QObject(parent), model(model), view(view), MVM(MVM) {
-    connect(view, &DeviceSelectionWindow::startCapture, this, &DeviceController::handleStartCapture);
+    :  QObject(parent), model(model), view(view), MVM(MVM)  {
+    connect(view,  &DeviceSelectionWindow::startCapture,  this,  &DeviceController::handleStartCapture);
     connect(view, &DeviceSelectionWindow::openQueryView, this, &DeviceController::handleOpenQueryView);
 }
 
+    // Obtener la ventana de captura
 void DeviceController::handleStartCapture(const QString &devName) {
     qDebug() << "Iniciando captura en dispositivo:" << devName;
 
@@ -52,7 +53,7 @@ void DeviceController::handleStartCapture(const QString &devName) {
     pcapThread->start();
     sqliteThread->start();
 
-    //Cambiar de vista
+    // Cambiar la vista al snifferWindow
     this->MVM->setCurrentView(target);
 }
 void DeviceController::handleOpenQueryView(){

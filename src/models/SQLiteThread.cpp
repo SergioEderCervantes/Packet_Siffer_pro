@@ -42,6 +42,7 @@ void SQLiteThread::run(){
     // ESTE HILO NO ESTA DISEÑADO PARA SER USADO EN LA VISTA DE CONSULTAS
     //Abrir la base de datos
     qDebug("Holalalala");
+    qDebug("Holalalala");
     int rc = sqlite3_open(DATABASE_NAME.c_str(),&db);
     if (rc != SQLITE_OK){
         qDebug() << "No se pudo abrir la base de datos: " << sqlite3_errmsg(db);

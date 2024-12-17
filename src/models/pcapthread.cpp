@@ -251,7 +251,6 @@ void PcapThread::packetHandler(u_char *user, const struct pcap_pkthdr *pkthdr, c
             }
         }
     }
-
 }
 void PcapThread::stop() {
     qDebug("fffffff");
