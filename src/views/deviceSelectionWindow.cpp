@@ -72,7 +72,7 @@ DeviceSelectionWindow::DeviceSelectionWindow(DeviceModel *model, QWidget *parent
     connect(tableListView, &QListView::doubleClicked, this, &DeviceSelectionWindow::onTableSelected);
     connect(startCaptureBtn, &QPushButton::clicked, this, &DeviceSelectionWindow::onStartCaptureClicked);
     connect(openQueryViewBtn, &QPushButton::clicked, this, &DeviceSelectionWindow::onOpenQueryView);
-
+    connect(this, &DeviceSelectionWindow::createCSV, model, &DeviceModel::onCreateCSV);
     // Layout principal
     auto *mainLayout = new QHBoxLayout;
     auto *leftLayout = new QVBoxLayout;
@@ -127,10 +127,19 @@ void DeviceSelectionWindow::onRenameTable() {
 }
 
 void DeviceSelectionWindow::onExportTableToExcel() {
-    QString filePath = QFileDialog::getSaveFileName(this, "Exportar a Excel", "", "Archivos Excel (*.xlsx)");
-    if (!filePath.isEmpty()) {
-        qDebug() << "Exportar tabla a:" << filePath;
+    // Obtener la ruta para guardar el archivo CSV
+    QString filePath = QFileDialog::getSaveFileName(this, "Exportar a CSV", "", "Archivos CSV (*.csv)");
+    if (filePath.isEmpty()) {
+        qDebug() << "Exportación cancelada.";
+        return;
     }
+
+    // Asegurar que el archivo tenga la extensión .csv
+    if (!filePath.endsWith(".csv")) {
+        filePath += ".csv";
+    }
+    emit createCSV(filePath, selectedTableName);
+
 }
 
 void DeviceSelectionWindow::onStartCaptureClicked() {

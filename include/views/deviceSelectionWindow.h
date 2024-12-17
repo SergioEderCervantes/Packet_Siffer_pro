@@ -21,6 +21,7 @@ signals:
     void deleteTable(const QString &tableName);
     void renameTable(const QString &tableName);
     void exportTableToExcel(const QString &tableName);
+    void createCSV(const QString &filePath, const QString &selectedTableName);
 
 private slots:
     void onDeviceSelected(const QModelIndex &index);
