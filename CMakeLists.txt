@@ -17,8 +17,8 @@ if(WIN32)
     add_definitions(-DWIN32)
     include_directories(
             ${CMAKE_SOURCE_DIR}/include
-            "C:\\ncap\\Include")
-    link_directories("C:\\ncap\\Lib\\x64")
+            "C:\\Develop\\npcap-sdk-1.13\\Include")
+    link_directories("C:\\Develop\\npcap-sdk-1.13\\Lib\\x64")
     set(PCAP_LIBS ws2_32 wpcap)
 elseif(UNIX)
     message(STATUS "Compilación para Linux")
