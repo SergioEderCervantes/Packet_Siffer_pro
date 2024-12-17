@@ -44,12 +44,12 @@ int main(int argc, char *argv[])
 {
     // Aqui empieza la chota
 
-    // QApplication app(argc, argv);
+    QApplication app(argc, argv);
 
-    // mainViewManager mainWindow;
-    // mainWindow.showMaximized();
+    mainViewManager mainWindow;
+    mainWindow.showMaximized();
 
-    // return app.exec();  // Inicia el bucle de eventos de Qt
+    return app.exec();  // Inicia el bucle de eventos de Qt
 
 
     sqlite3 *db;

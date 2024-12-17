@@ -9,8 +9,9 @@
 #include <QLabel>
 #include <QRegularExpression>
 
-snifferWindow::snifferWindow(QWidget *parent)
+snifferWindow::snifferWindow(QWidget *parent, PcapThread *thread)
     : QWidget(parent) {
+    this->pcapThread = thread;
     // ------------------------------
     // Crear la tabla de paquetes
     // ------------------------------
@@ -33,6 +34,17 @@ snifferWindow::snifferWindow(QWidget *parent)
     openSqlButton->setMaximumWidth(200); // Aproximadamente el 20% si la ventana mide 1000px
     connect(openSqlButton, &QPushButton::clicked, this, &snifferWindow::openSqlPopup);
 
+    pauseButton = new QPushButton("Pausar", this);
+    resumeButton = new QPushButton("Reanudar", this);
+    pauseButton->setFixedHeight(40);
+    resumeButton->setFixedHeight(40);
+    pauseButton->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    resumeButton->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    pauseButton->setMaximumWidth(200);
+    resumeButton->setMaximumWidth(200);
+    connect(pauseButton, &QPushButton::clicked, this, &snifferWindow::pausar);
+
+    connect(resumeButton, &QPushButton::clicked, this, &snifferWindow::reanudar);
     // ------------------------------
     // Crear el visor de datos crudos con un título
     // ------------------------------
@@ -85,11 +97,17 @@ snifferWindow::snifferWindow(QWidget *parent)
     // ------------------------------
     // Layout principal
     // ------------------------------
+    QHBoxLayout *buttonRowLayout = new QHBoxLayout();
+    buttonRowLayout->addWidget(openSqlButton);          // Botón "Abrir Panel de Consultas"
+    buttonRowLayout->addWidget(pauseButton);            // Botón "Pausar"
+    buttonRowLayout->addWidget(resumeButton);           // Botón "Reanudar"
+    buttonRowLayout->setAlignment(Qt::AlignLeft);
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->addWidget(openSqlButton, 0, Qt::AlignLeft); // Botón para abrir consultas SQL
+    mainLayout->addLayout(buttonRowLayout);
     mainLayout->addWidget(mainSplitter);
-    setLayout(mainLayout);
 
+
+    setLayout(mainLayout);
     // Configurar el tamaño inicial de la ventana
     resize(1000, 800);
 }
@@ -101,7 +119,14 @@ bool snifferWindow::validateQueryFormat(const QString &query) {
     QRegularExpressionMatch match = regex.match(query);
     return match.hasMatch();
 }
-
+void snifferWindow::pausar(){
+    qDebug("porfa");
+    emit pauseAction();
+}
+void snifferWindow::reanudar(){
+    qDebug("ya no quiero nada");
+    emit resumeAction();
+}
 void snifferWindow::openSqlPopup() {
     QDialog *dialog = new QDialog(this);
     dialog->setWindowTitle("Panel de Consultas SQL");
